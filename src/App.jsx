@@ -12,7 +12,12 @@ function App() {
   const [totalPages, setTotalPages] = useState(1);
   const [selectedItem, setSelectedItem] = useState(null);
   const [itemTrailer, setItemTrailer] = useState(null);
-  const [serverIndex, setServerIndex] = useState(0); 
+
+  // Estados dinámicos para Series (TV)
+  const [seasons, setSeasons] = useState([]);
+  const [episodes, setEpisodes] = useState([]);
+  const [selectedSeason, setSelectedSeason] = useState(1);
+  const [selectedEpisode, setSelectedEpisode] = useState(1);
 
   const [videoUrl, setVideoUrl] = useState('');
   const [customVideoSource, setCustomVideoSource] = useState('');
@@ -20,27 +25,10 @@ function App() {
   
   const API_KEY = import.meta.env.VITE_TMDB_API_KEY;
 
-  // Modo Estricto Latino: Cero servidores globales o híbridos
-  const servers = [
-    { 
-      name: 'Servidor 1 (UnLimPlay - Principal)', 
-      getUrl: (type, id) => type === 'movie' 
-        ? `https://unlimplay.com/f/embed/movie/${id}` 
-        : `https://unlimplay.com/f/embed/tv/${id}/1/1` 
-    },
-    { 
-      name: 'Servidor 2 (Tomatomatela - Respaldo)', 
-      getUrl: (type, id) => type === 'movie' 
-        ? `https://tomatomatela.com/embed/movie/${id}` 
-        : `https://tomatomatela.com/embed/tv/${id}/1/1` 
-    },
-    { 
-      name: 'Servidor 3 (PelisAPI - Respaldo)', 
-      getUrl: (type, id) => type === 'movie' 
-        ? `https://pelisapi.com/embed/movie/${id}` 
-        : `https://pelisapi.com/embed/tv/${id}/1/1` 
-    }
-  ];
+  // Motor Único: 100% Latino. Ahora recibe parámetros de temporada y capítulo.
+  const getUnLimPlayUrl = (type, id, s, e) => type === 'movie' 
+    ? `https://unlimplay.com/f/embed/movie/${id}` 
+    : `https://unlimplay.com/f/embed/tv/${id}/${s}/${e}`;
 
   useEffect(() => {
     if (activeTab === 'catalog') {
@@ -80,17 +68,49 @@ function App() {
     setPage(1);
   };
 
+  const fetchEpisodes = (tvId, seasonNumber) => {
+    axios.get(`https://api.themoviedb.org/3/tv/${tvId}/season/${seasonNumber}?api_key=${API_KEY}&language=es-MX`)
+      .then(res => setEpisodes(res.data.episodes))
+      .catch(console.error);
+  };
+
+  const handleSeasonChange = (e) => {
+    const s = parseInt(e.target.value);
+    setSelectedSeason(s);
+    setSelectedEpisode(1); // Al cambiar de temporada, volvemos al capítulo 1
+    fetchEpisodes(selectedItem.id, s);
+  };
+
   const handleSelectItem = (item) => {
     setSelectedItem(item);
     setItemTrailer(null);
-    setServerIndex(0); // Inicia siempre en el motor principal
+    setSeasons([]);
+    setEpisodes([]);
+    setSelectedSeason(1);
+    setSelectedEpisode(1);
 
+    // Obtener Tráiler
     axios.get(`https://api.themoviedb.org/3/${contentType}/${item.id}/videos?api_key=${API_KEY}&language=es-MX`)
       .then(response => {
         const videos = response.data.results;
         const trailer = videos.find(v => v.type === 'Trailer' && v.site === 'YouTube') || videos.find(v => v.site === 'YouTube');
         if (trailer) setItemTrailer(trailer.key);
       }).catch(console.error);
+
+    // Obtener Temporadas si es una serie
+    if (contentType === 'tv') {
+      axios.get(`https://api.themoviedb.org/3/tv/${item.id}?api_key=${API_KEY}&language=es-MX`)
+        .then(res => {
+          // Filtramos la temporada 0 (suelen ser "Especiales" o extras)
+          const validSeasons = res.data.seasons.filter(s => s.season_number > 0);
+          setSeasons(validSeasons);
+          if (validSeasons.length > 0) {
+            const firstSeason = validSeasons[0].season_number;
+            setSelectedSeason(firstSeason);
+            fetchEpisodes(item.id, firstSeason);
+          }
+        }).catch(console.error);
+    }
   };
 
   const handleFileUpload = (e) => {
@@ -107,8 +127,8 @@ function App() {
     <div style={{ backgroundColor: '#141414', color: '#fff', minHeight: '100vh', padding: '20px', fontFamily: 'sans-serif' }}>
       
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #333', paddingBottom: '15px', marginBottom: '20px', flexWrap: 'wrap', gap: '15px' }}>
-        <h1 style={{ margin: 0, color: '#e50914', cursor: 'pointer' }} onClick={() => { setActiveTab('catalog'); setSelectedItem(null); }}>
-          🎬 Mi Cine Latino
+        <h1 style={{ margin: 0, color: '#ffffff', cursor: 'pointer' }} onClick={() => { setActiveTab('catalog'); setSelectedItem(null); }}>
+          🎬 Mi Cine Web
         </h1>
         <div style={{ display: 'flex', gap: '10px' }}>
           <button onClick={() => { setActiveTab('catalog'); setSelectedItem(null); }} style={{ backgroundColor: activeTab === 'catalog' ? '#e50914' : '#222', color: '#fff', border: 'none', padding: '10px 20px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>Películas y Series</button>
@@ -145,33 +165,54 @@ function App() {
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '40px', marginTop: '10px', alignItems: 'flex-start' }}>
             <div style={{ flex: 2, minWidth: '300px', maxWidth: '800px' }}>
               <h2 style={{ fontSize: '28px', marginBottom: '15px' }}>▶ Reproduciendo: {selectedItem.title || selectedItem.name}</h2>
+              <p style={{ color: '#aaa', fontSize: '14px', marginBottom: '20px' }}>📅 Estreno: {selectedItem.release_date || selectedItem.first_air_date || 'Desconocida'} | ⭐ Calificación: {selectedItem.vote_average} / 10</p>
               
-              <div style={{ backgroundColor: '#1a1a1a', borderLeft: '4px solid #e50914', padding: '10px', marginBottom: '15px', borderRadius: '4px' }}>
-                <p style={{ color: '#fff', fontSize: '13px', margin: 0 }}>
-                  💡 <strong>Modo Estricto Latino:</strong> Esta plataforma extrae videos exclusivamente de bases de datos hispanas. Si el Servidor 1 falla, prueba los respaldos. Si ninguno conecta, significa que el servidor de origen está caído por saturación.
-                  <br/><br/>🛡️ Obligatorio usar <strong>Brave Browser</strong> o instalar <strong>uBlock Origin</strong>.
-                </p>
-              </div>
-
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '15px', flexWrap: 'wrap' }}>
-                {servers.map((srv, idx) => (
-                  <button key={idx} onClick={() => setServerIndex(idx)} style={{ backgroundColor: serverIndex === idx ? '#e50914' : '#222', color: '#fff', border: 'none', padding: '8px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}>{srv.name}</button>
-                ))}
-              </div>
-
-              <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden', borderRadius: '8px', boxShadow: '0 4px 20px rgba(0,0,0,0.8)', backgroundColor: '#000' }}>
-                <iframe key={serverIndex} src={servers[serverIndex].getUrl(contentType, selectedItem.id)} title="Reproductor" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen></iframe>
-              </div>
-
-              {itemTrailer && (
-                <div style={{ marginTop: '15px' }}><a href={`https://www.youtube.com/watch?v=${itemTrailer}`} target="_blank" rel="noopener noreferrer" style={{ color: '#e50914', textDecoration: 'none', fontWeight: 'bold', fontSize: '14px' }}>🎬 Ver tráiler oficial en YouTube</a></div>
-              )}
-
-              <div style={{ marginTop: '20px' }}>
-                <p style={{ color: '#aaa', fontSize: '14px', marginBottom: '15px' }}>📅 Estreno: {selectedItem.release_date || selectedItem.first_air_date || 'Desconocida'} | ⭐ Calificación: {selectedItem.vote_average} / 10</p>
+              <div style={{ marginBottom: '25px' }}>
                 <h3 style={{ borderBottom: '2px solid #e50914', paddingBottom: '5px', display: 'inline-block', marginBottom: '10px' }}>Sinopsis</h3>
                 <p style={{ fontSize: '16px', lineHeight: '1.6', color: '#ddd' }}>{selectedItem.overview || 'No hay sinopsis disponible en español.'}</p>
               </div>
+
+              {itemTrailer && (
+                <div style={{ marginBottom: '30px' }}>
+                  <h3 style={{ borderBottom: '2px solid #e50914', paddingBottom: '5px', display: 'inline-block', marginBottom: '15px' }}>Tráiler Oficial</h3>
+                  <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden', borderRadius: '8px', boxShadow: '0 4px 20px rgba(0,0,0,0.8)', backgroundColor: '#000' }}>
+                    <iframe src={`https://www.youtube.com/embed/${itemTrailer}`} title="Tráiler de YouTube" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen></iframe>
+                  </div>
+                </div>
+              )}
+
+              {contentType === 'tv' && seasons.length > 0 && (
+                <div style={{ marginBottom: '25px', backgroundColor: '#1a1a1a', padding: '15px', borderRadius: '8px', display: 'flex', gap: '20px', flexWrap: 'wrap', borderLeft: '4px solid #e50914' }}>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold', color: '#aaa', fontSize: '14px' }}>Temporada:</label>
+                    <select value={selectedSeason} onChange={handleSeasonChange} style={{ padding: '8px 12px', borderRadius: '4px', backgroundColor: '#333', color: '#fff', border: '1px solid #444', cursor: 'pointer', fontSize: '15px' }}>
+                      {seasons.map(s => (
+                        <option key={s.id} value={s.season_number}>Temporada {s.season_number}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold', color: '#aaa', fontSize: '14px' }}>Capítulo:</label>
+                    <select value={selectedEpisode} onChange={(e) => setSelectedEpisode(parseInt(e.target.value))} style={{ padding: '8px 12px', borderRadius: '4px', backgroundColor: '#333', color: '#fff', border: '1px solid #444', cursor: 'pointer', fontSize: '15px' }}>
+                      {episodes.map(ep => (
+                        <option key={ep.id} value={ep.episode_number}>{ep.episode_number}. {ep.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              )}
+
+              <div style={{ backgroundColor: '#1a1a1a', borderLeft: '4px solid #e50914', padding: '10px', marginBottom: '15px', borderRadius: '4px' }}>
+                <p style={{ color: '#fff', fontSize: '13px', margin: 0 }}>
+                  💡 <strong>Modo Estricto Latino:</strong> Esta plataforma usa un motor dedicado exclusivamente a bases de datos hispanas. Si el video no carga, significa que la película o capítulo aún no ha sido doblado o subido a la red latina.
+                  <br/><br/>🛡️ Usa <strong>Brave Browser</strong> o <strong>uBlock Origin</strong> para una experiencia sin anuncios.
+                </p>
+              </div>
+
+              <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden', borderRadius: '8px', boxShadow: '0 4px 20px rgba(0,0,0,0.8)', backgroundColor: '#000' }}>
+                <iframe src={getUnLimPlayUrl(contentType, selectedItem.id, selectedSeason, selectedEpisode)} title="Reproductor Principal" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen></iframe>
+              </div>
+
             </div>
 
             <div style={{ flex: 1, minWidth: '220px', textAlign: 'center' }}>
