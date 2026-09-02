@@ -1,4 +1,5 @@
-import React, { useEffect, useState, useRef } from 'react';
+def format_app_jsx():
+    return """import React, { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
 
 function App() {
@@ -20,25 +21,25 @@ function App() {
   
   const API_KEY = import.meta.env.VITE_TMDB_API_KEY;
 
-  // Servidores purgados: Ecosistema 100% Latino
+  // Ecosistema con respaldos híbridos para priorizar español latino
   const servers = [
     { 
-      name: 'Servidor 1 (UnLimPlay - Principal)', 
+      name: 'Servidor 1 (UnLimPlay - 100% Latino)', 
       getUrl: (type, id) => type === 'movie' 
         ? `https://unlimplay.com/f/embed/movie/${id}` 
         : `https://unlimplay.com/f/embed/tv/${id}/1/1` 
     },
     { 
-      name: 'Servidor 2 (Tomatomatela)', 
+      name: 'Servidor 2 (AutoEmbed - Forzado Latino)', 
       getUrl: (type, id) => type === 'movie' 
-        ? `https://tomatomatela.com/embed/movie/${id}` 
-        : `https://tomatomatela.com/embed/tv/${id}/1/1` 
+        ? `https://autoembed.co/movie/tmdb/${id}?lang=es-MX` 
+        : `https://autoembed.co/tv/tmdb/${id}-1-1?lang=es-MX` 
     },
     { 
-      name: 'Servidor 3 (PelisAPI)', 
+      name: 'Servidor 3 (SmashyStream)', 
       getUrl: (type, id) => type === 'movie' 
-        ? `https://pelisapi.com/embed/movie/${id}` 
-        : `https://pelisapi.com/embed/tv/${id}/1/1` 
+        ? `https://embed.smashystream.com/playere.php?tmdb=${id}` 
+        : `https://embed.smashystream.com/playere.php?tmdb=${id}&season=1&episode=1` 
     }
   ];
 
@@ -83,7 +84,7 @@ function App() {
   const handleSelectItem = (item) => {
     setSelectedItem(item);
     setItemTrailer(null);
-    setServerIndex(0); // Forzar siempre el inicio en UnLimPlay
+    setServerIndex(0); // Inicia siempre en UnLimPlay
 
     axios.get(`https://api.themoviedb.org/3/${contentType}/${item.id}/videos?api_key=${API_KEY}&language=es-MX`)
       .then(response => {
@@ -148,8 +149,8 @@ function App() {
               
               <div style={{ backgroundColor: '#1a1a1a', borderLeft: '4px solid #e50914', padding: '10px', marginBottom: '15px', borderRadius: '4px' }}>
                 <p style={{ color: '#fff', fontSize: '13px', margin: 0 }}>
-                  💡 <strong>Catálogo 100% Latino:</strong> El <strong>Servidor 1</strong> es tu motor principal. Los servidores 2 y 3 son archivos históricos; si no cargan, es porque el dominio fuente está inactivo o en mantenimiento temporal.
-                  <br/><br/>🛡️ Obligatorio usar <strong>Brave Browser</strong> o instalar <strong>uBlock Origin</strong> para bloquear ventanas emergentes.
+                  💡 <strong>Sistema de Respaldos:</strong> El <strong>Servidor 1</strong> te dará el audio latino nativo. Si falla, los servidores 2 y 3 intentarán forzar subtítulos o el doblaje. En el Servidor 3, haz clic en los botones internos del video para probar distintas fuentes.
+                  <br/><br/>🛡️ Obligatorio usar <strong>Brave Browser</strong> o instalar <strong>uBlock Origin</strong> para una experiencia limpia.
                 </p>
               </div>
 
@@ -223,3 +224,6 @@ function App() {
 }
 
 export default App;
+"""
+
+print(format_app_jsx())
