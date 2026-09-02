@@ -4,6 +4,7 @@ import axios from 'axios';
 function App() {
   const [activeTab, setActiveTab] = useState('catalog');
   const [contentType, setContentType] = useState('movie');
+  const [listType, setListType] = useState('popular'); // Nuevo estado para Populares/Estrenos
   const [items, setItems] = useState([]);
   const [genres, setGenres] = useState([]);
   const [selectedGenre, setSelectedGenre] = useState('');
@@ -43,18 +44,26 @@ function App() {
 
   useEffect(() => {
     if (activeTab !== 'catalog') return;
-    let url = searchTerm.trim() !== '' 
-      ? `https://api.themoviedb.org/3/search/${contentType}?api_key=${API_KEY}&language=es-MX&query=${searchTerm}&page=${page}`
-      : selectedGenre !== '' 
-        ? `https://api.themoviedb.org/3/discover/${contentType}?api_key=${API_KEY}&language=es-MX&with_genres=${selectedGenre}&page=${page}`
-        : `https://api.themoviedb.org/3/${contentType}/popular?api_key=${API_KEY}&language=es-MX&page=${page}`;
+    
+    let url = '';
+    if (searchTerm.trim() !== '') {
+      url = `https://api.themoviedb.org/3/search/${contentType}?api_key=${API_KEY}&language=es-MX&query=${searchTerm}&page=${page}`;
+    } else if (selectedGenre !== '') {
+      url = `https://api.themoviedb.org/3/discover/${contentType}?api_key=${API_KEY}&language=es-MX&with_genres=${selectedGenre}&page=${page}`;
+    } else {
+      // Alterna entre los más vistos (popular) o los últimos estrenos (now_playing / on_the_air)
+      const endpoint = listType === 'latest' 
+        ? (contentType === 'movie' ? 'now_playing' : 'on_the_air') 
+        : 'popular';
+      url = `https://api.themoviedb.org/3/${contentType}/${endpoint}?api_key=${API_KEY}&language=es-MX&page=${page}`;
+    }
 
     axios.get(url).then(response => {
       setItems(response.data.results);
       setTotalPages(response.data.total_pages > 500 ? 500 : response.data.total_pages);
     }).catch(console.error);
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [searchTerm, selectedGenre, contentType, page, activeTab, API_KEY]); 
+  }, [searchTerm, selectedGenre, contentType, page, activeTab, API_KEY, listType]); 
 
   const handleGenreChange = (genreId) => {
     setSelectedGenre(genreId);
@@ -224,11 +233,20 @@ function App() {
       {activeTab === 'catalog' && !selectedItem && (
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px', marginBottom: '20px' }}>
-            <div style={{ display: 'flex', gap: '20px' }}>
+            <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
+              
+              {/* Controles de Películas y Series */}
               <div style={{ display: 'flex', backgroundColor: '#222', borderRadius: '6px', padding: '3px' }}>
-                <button onClick={() => setContentType('movie')} style={{ backgroundColor: contentType === 'movie' ? '#e50914' : 'transparent', color: '#fff', border: 'none', padding: '8px 15px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>Películas</button>
-                <button onClick={() => setContentType('tv')} style={{ backgroundColor: contentType === 'tv' ? '#e50914' : 'transparent', color: '#fff', border: 'none', padding: '8px 15px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>Series</button>
+                <button onClick={() => { setContentType('movie'); setPage(1); }} style={{ backgroundColor: contentType === 'movie' ? '#e50914' : 'transparent', color: '#fff', border: 'none', padding: '8px 15px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>Películas</button>
+                <button onClick={() => { setContentType('tv'); setPage(1); }} style={{ backgroundColor: contentType === 'tv' ? '#e50914' : 'transparent', color: '#fff', border: 'none', padding: '8px 15px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>Series</button>
               </div>
+
+              {/* Nuevos Controles de Populares y Estrenos */}
+              <div style={{ display: 'flex', backgroundColor: '#222', borderRadius: '6px', padding: '3px' }}>
+                <button onClick={() => { setListType('popular'); setPage(1); setSelectedGenre(''); setSearchTerm(''); }} style={{ backgroundColor: listType === 'popular' ? '#555' : 'transparent', color: '#fff', border: 'none', padding: '8px 15px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>🔥 Populares</button>
+                <button onClick={() => { setListType('latest'); setPage(1); setSelectedGenre(''); setSearchTerm(''); }} style={{ backgroundColor: listType === 'latest' ? '#555' : 'transparent', color: '#fff', border: 'none', padding: '8px 15px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>✨ Estrenos</button>
+              </div>
+
             </div>
             <input type="text" placeholder={contentType === 'movie' ? "Buscar películas..." : "Buscar series..."} value={searchTerm} onChange={(e) => handleSearchChange(e.target.value)} style={{ padding: '10px 15px', borderRadius: '4px', border: '1px solid #333', backgroundColor: '#222', color: '#fff', width: '250px', fontSize: '16px' }} />
           </div>
