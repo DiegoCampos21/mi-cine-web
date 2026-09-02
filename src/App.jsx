@@ -20,25 +20,25 @@ function App() {
   
   const API_KEY = import.meta.env.VITE_TMDB_API_KEY;
 
-  // Servidores de nueva generación con soporte de Audio Dual/Multipista real
+  // Servidores estables con soporte de subtítulos o selector de audio interno
   const servers = [
     { 
-      name: 'Servidor 1 (Embed.su - Selector de Audio 🎧)', 
+      name: 'Servidor 1 (VidLink - Selector de Audio ⚙️)', 
       getUrl: (type, id) => type === 'movie' 
-        ? `https://embed.su/embed/movie/${id}` 
-        : `https://embed.su/embed/tv/${id}/1/1` 
+        ? `https://vidlink.pro/movie/${id}?primaryColor=e50914` 
+        : `https://vidlink.pro/tv/${id}/1/1?primaryColor=e50914` 
     },
     { 
-      name: 'Servidor 2 (VidBinge - Alternativo)', 
-      getUrl: (type, id) => type === 'movie' 
-        ? `https://vidbinge.dev/embed/movie/${id}` 
-        : `https://vidbinge.dev/embed/tv/${id}/1/1` 
-    },
-    { 
-      name: 'Servidor 3 (Vidsrc PRO)', 
+      name: 'Servidor 2 (VidSrc PRO - Global)', 
       getUrl: (type, id) => type === 'movie' 
         ? `https://vidsrc.pro/embed/movie/${id}` 
         : `https://vidsrc.pro/embed/tv/${id}/1/1` 
+    },
+    { 
+      name: 'Servidor 3 (MultiEmbed)', 
+      getUrl: (type, id) => type === 'movie' 
+        ? `https://multiembed.mov/?video_id=${id}&tmdb=1` 
+        : `https://multiembed.mov/?video_id=${id}&tmdb=1&s=1&e=1` 
     }
   ];
 
@@ -83,7 +83,7 @@ function App() {
   const handleSelectItem = (item) => {
     setSelectedItem(item);
     setItemTrailer(null);
-    setServerIndex(0);
+    setServerIndex(0); // Inicia siempre en VidLink
 
     axios.get(`https://api.themoviedb.org/3/${contentType}/${item.id}/videos?api_key=${API_KEY}&language=es-MX`)
       .then(response => {
@@ -148,8 +148,8 @@ function App() {
               
               <div style={{ backgroundColor: '#1a1a1a', borderLeft: '4px solid #e50914', padding: '10px', marginBottom: '15px', borderRadius: '4px' }}>
                 <p style={{ color: '#fff', fontSize: '13px', margin: 0 }}>
-                  💡 <strong>Instrucciones de Audio:</strong> Inicia el video en el <strong>Servidor 1 (Embed.su)</strong>. Una vez reproduciendo, busca el ícono de <strong>Auriculares 🎧 o Tuerca ⚙️</strong> en la barra inferior del reproductor para cambiar la pista a Español Latino.
-                  <br/><br/>🛡️ Usa <strong>Brave Browser</strong> o <strong>uBlock Origin</strong> para bloquear pop-ups de estos servidores.
+                  💡 <strong>Instrucciones de Idioma:</strong> El <strong>Servidor 1 (VidLink)</strong> suele incluir audios duales. Haz clic en el ícono de engranaje (⚙️) dentro de su reproductor para buscar la pista "Spanish" o activa los subtítulos (CC). Si no funciona, prueba los otros servidores.
+                  <br/><br/>🛡️ Obligatorio usar <strong>Brave Browser</strong> o instalar <strong>uBlock Origin</strong> para bloquear la publicidad web.
                 </p>
               </div>
 
@@ -204,7 +204,7 @@ function App() {
           
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '20px', marginTop: '20px' }}>
             {items.map(item => (
-              <div key={item.id} onClick={() => handleSelectItem(item)} style={{ backgroundColor: '#1f1f1f', borderRadius: '8px', overflow: 'hidden', padding: '10px', textAlign: 'center', cursor: 'pointer' }}>
+              <div key={item.id} onClick={() => handleSelectItem(item)} style={{ backgroundColor: '#1f1f1f', borderRadius: '8px', overflow: 'hidden', padding: '10px', textAlign: 'center', cursor: 'pointer', transition: 'transform 0.2s' }} onMouseOver={e => e.currentTarget.style.transform = 'scale(1.02)'} onMouseOut={e => e.currentTarget.style.transform = 'scale(1)'}>
                 {item.poster_path ? <img src={`https://image.tmdb.org/t/p/w500${item.poster_path}`} alt={item.title} style={{ width: '100%', borderRadius: '4px' }} /> : <div style={{ height: '300px', backgroundColor: '#333' }}>Sin imagen</div>}
                 <h3 style={{ fontSize: '15px', marginTop: '10px', height: '40px', overflow: 'hidden' }}>{item.title || item.name}</h3>
               </div>
