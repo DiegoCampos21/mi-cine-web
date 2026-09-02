@@ -12,19 +12,11 @@ function App() {
   const [totalPages, setTotalPages] = useState(1);
   const [selectedItem, setSelectedItem] = useState(null);
   const [itemTrailer, setItemTrailer] = useState(null);
+  const [videoProvider, setVideoProvider] = useState('multiembed'); // Servidor automático principal
 
-  // Estados para el reproductor nativo avanzado (Audio dual y subtítulos)
-  const [activeAudioTrack, setActiveAudioTrack] = useState('latino'); // 'latino' o 'ingles'
-  const [activeSubtitle, setActiveSubtitle] = useState('es'); // 'es', 'en' o 'off'
-  
-  // URLs de prueba o fuentes personalizadas para el reproductor nativo
-  const [videoSources, setVideoSources] = useState({
-    latino: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
-    ingles: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4'
-  });
-  
-  const [customVideoUrl, setCustomVideoUrl] = useState('');
-  const videoRef = useRef(null);
+  // Estados para el reproductor local/URL personalizada
+  const [videoUrl, setVideoUrl] = useState('');
+  const [customVideoSource, setCustomVideoSource] = useState('');
   const fileInputRef = useRef(null);
   
   const API_KEY = import.meta.env.VITE_TMDB_API_KEY;
@@ -79,8 +71,7 @@ function App() {
   const handleSelectItem = (item) => {
     setSelectedItem(item);
     setItemTrailer(null);
-    setActiveAudioTrack('latino');
-    setActiveSubtitle('es');
+    setVideoProvider('multiembed'); // Mantener el mejor servidor por defecto
 
     // Buscar tráiler oficial en YouTube como respaldo
     axios.get(`https://api.themoviedb.org/3/${contentType}/${item.id}/videos?api_key=${API_KEY}&language=es-MX`)
@@ -97,19 +88,35 @@ function App() {
       .catch(error => console.error("Error al buscar el tráiler:", error));
   };
 
-  // Manejar la carga de archivo local en el reproductor nativo
+  // Generador automático de URL por ID de TMDB
+  const getEmbedUrl = () => {
+    if (!selectedItem) return '';
+    const id = selectedItem.id;
+
+    if (videoProvider === 'multiembed') {
+      return contentType === 'movie'
+        ? `https://multiembed.mov/?video_id=${id}&tmdb=1`
+        : `https://multiembed.mov/?video_id=${id}&tmdb=1&s=1&e=1`;
+    } else if (videoProvider === 'vidsrc') {
+      return contentType === 'movie' 
+        ? `https://vidsrc.me/embed/movie?tmdb=${id}` 
+        : `https://vidsrc.me/embed/tv?tmdb=${id}`;
+    }
+  };
+
+  // Manejar la carga de archivo local
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
       const localUrl = URL.createObjectURL(file);
-      setVideoSources(prev => ({ ...prev, latino: localUrl }));
+      setCustomVideoSource(localUrl);
     }
   };
 
-  const handleCustomUrlSubmit = (e) => {
+  const handleUrlSubmit = (e) => {
     e.preventDefault();
-    if (customVideoUrl.trim() !== '') {
-      setVideoSources(prev => ({ ...prev, [activeAudioTrack]: customVideoUrl.trim() }));
+    if (videoUrl.trim() !== '') {
+      setCustomVideoSource(videoUrl.trim());
     }
   };
 
@@ -119,7 +126,7 @@ function App() {
       {/* Barra de Navegación Superior Global */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #333', paddingBottom: '15px', marginBottom: '20px', flexWrap: 'wrap', gap: '15px' }}>
         <h1 style={{ margin: 0, color: '#e50914', cursor: 'pointer' }} onClick={() => { setActiveTab('catalog'); setSelectedItem(null); }}>
-          🎬 Mi Plataforma de Cine Pro
+          🎬 Mi Plataforma de Cine
         </h1>
         
         <div style={{ display: 'flex', gap: '10px' }}>
@@ -133,79 +140,71 @@ function App() {
             onClick={() => setActiveTab('player')}
             style={{ backgroundColor: activeTab === 'player' ? '#e50914' : '#222', color: '#fff', border: 'none', padding: '10px 20px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
           >
-            ⚙️ Configurar Fuentes y Archivos
+            📁 Reproductor Local / URL
           </button>
         </div>
       </div>
 
-      {/* VISTA 1: GESTOR DE FUENTES Y REPRODUCTOR PERSONALIZADO */}
+      {/* VISTA 1: REPRODUCTOR LOCAL / URL */}
       {activeTab === 'player' && (
-        <div style={{ maxWidth: '900px', margin: '0 auto', paddingBottom: '40px' }}>
-          <h2 style={{ marginBottom: '10px', textAlign: 'center' }}>Reproductor Nativo con Control de Idioma y Subtítulos</h2>
-          <p style={{ color: '#aaa', marginBottom: '30px', textAlign: 'center' }}>Sube archivos locales o asigna enlaces directos limpios (sin anuncios ni pop-ups).</p>
+        <div style={{ maxWidth: '800px', margin: '0 auto', textAlign: 'center', paddingBottom: '40px' }}>
+          <h2 style={{ marginBottom: '10px' }}>Reproductor Multimedia Personal</h2>
+          <p style={{ color: '#aaa', marginBottom: '30px' }}>Sube tus videos locales o introduce un enlace directo compatible.</p>
 
-          <div style={{ backgroundColor: '#1f1f1f', padding: '20px', borderRadius: '8px', marginBottom: '30px' }}>
-            <h3 style={{ marginBottom: '15px', color: '#e50914' }}>Asignar Enlaces de Video Directos</h3>
-            <form onSubmit={handleCustomUrlSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-              <div style={{ display: 'flex', gap: '15px', alignItems: 'center', flexWrap: 'wrap' }}>
-                <label style={{ minWidth: '140px', fontWeight: 'bold' }}>Pista Seleccionada:</label>
-                <select 
-                  value={activeAudioTrack} 
-                  onChange={(e) => setActiveAudioTrack(e.target.value)}
-                  style={{ padding: '8px 12px', borderRadius: '4px', backgroundColor: '#333', color: '#fff', border: '1px solid #555' }}
-                >
-                  <option value="latino">Español Latino</option>
-                  <option value="ingles">Inglés</option>
-                </select>
-              </div>
-              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                <input 
-                  type="url" 
-                  placeholder="https://tu-servidor.com/video-en-alta-calidad.mp4" 
-                  value={customVideoUrl}
-                  onChange={(e) => setCustomVideoUrl(e.target.value)}
-                  style={{ flex: 1, padding: '10px 15px', borderRadius: '4px', border: '1px solid #333', backgroundColor: '#222', color: '#fff', fontSize: '14px', minWidth: '280px' }}
-                />
-                <button 
-                  type="submit"
-                  style={{ backgroundColor: '#e50914', color: '#fff', border: 'none', padding: '10px 20px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
-                >
-                  Actualizar Enlace
-                </button>
-              </div>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', marginBottom: '30px', flexWrap: 'wrap' }}>
+            <div>
+              <input 
+                type="file" 
+                accept="video/*" 
+                ref={fileInputRef} 
+                onChange={handleFileUpload} 
+                style={{ display: 'none' }} 
+              />
+              <button 
+                onClick={() => fileInputRef.current.click()}
+                style={{ backgroundColor: '#333', color: '#fff', border: '1px solid #555', padding: '12px 20px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
+              >
+                📂 Seleccionar archivo multimedia
+              </button>
+            </div>
+
+            <form onSubmit={handleUrlSubmit} style={{ display: 'flex', gap: '10px' }}>
+              <input 
+                type="url" 
+                placeholder="https://ejemplo.com/video.mp4" 
+                value={videoUrl}
+                onChange={(e) => setVideoUrl(e.target.value)}
+                style={{ padding: '10px 15px', borderRadius: '4px', border: '1px solid #333', backgroundColor: '#222', color: '#fff', width: '280px', fontSize: '14px' }}
+              />
+              <button 
+                type="submit"
+                style={{ backgroundColor: '#e50914', color: '#fff', border: 'none', padding: '10px 15px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
+              >
+                Cargar URL
+              </button>
             </form>
           </div>
 
-          {/* Reproductor HTML5 Nativo con controles limpios */}
-          <div style={{ backgroundColor: '#000', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.8)' }}>
-            <video 
-              ref={videoRef}
-              src={videoSources[activeAudioTrack]} 
-              controls 
-              playsInline
-              style={{ width: '100%', maxHeight: '500px', display: 'block' }}
-            >
-              <track 
-                kind="subtitles" 
-                src="https://raw.githubusercontent.com/andris9/subtitles-parser/master/test/fixtures/subtitles.vtt" 
-                srcLang="es" 
-                label="Español" 
-                default={activeSubtitle === 'es'} 
-              />
-              <track 
-                kind="subtitles" 
-                src="https://raw.githubusercontent.com/andris9/subtitles-parser/master/test/fixtures/subtitles.vtt" 
-                srcLang="en" 
-                label="English" 
-                default={activeSubtitle === 'en'} 
-              />
-              Tu navegador no soporta la reproducción de video HTML5.
-            </video>
-          </div>
+          {customVideoSource ? (
+            <div style={{ backgroundColor: '#000', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.8)' }}>
+              <video 
+                src={customVideoSource} 
+                controls 
+                autoPlay 
+                style={{ width: '100%', maxHeight: '500px', display: 'block' }}
+              >
+                Tu navegador no soporta la reproducción de video.
+              </video>
+            </div>
+          ) : (
+            <div style={{ border: '2px dashed #444', borderRadius: '8px', padding: '60px 20px', color: '#666' }}>
+              <p style={{ fontSize: '18px' }}>Ningún video seleccionado o cargado todavía.</p>
+            </div>
+          )}
         </div>
       )}
 
-      {/* VISTA 2: DETALLE Y REPRODUCTOR NATIVO DE LA PELÍCULA / SERIE SELECCIONADA */}
+      {/* VISTA 2: DETALLE Y REPRODUCTOR AUTOMÁTICO DE LA PELÍCULA / SERIE */}
       {activeTab === 'catalog' && selectedItem && (
         <div>
           <button 
@@ -217,45 +216,36 @@ function App() {
 
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '40px', marginTop: '10px', alignItems: 'flex-start' }}>
             
-            {/* Columna Izquierda: Reproductor Nativo con Selector de Idioma Real */}
+            {/* Columna Izquierda: Reproductor Automático con Selector de Respaldo */}
             <div style={{ flex: 2, minWidth: '300px', maxWidth: '800px' }}>
               <h2 style={{ fontSize: '28px', marginBottom: '15px' }}>▶ Reproduciendo: {selectedItem.title || selectedItem.name}</h2>
               
-              {/* Controles de Idioma Nativos en Pantalla */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '10px', backgroundColor: '#1f1f1f', padding: '10px 15px', borderRadius: '6px' }}>
-                <span style={{ fontSize: '13px', color: '#46d369', fontWeight: 'bold' }}>
-                  🛡️ Reproductor Nativo Seguro (Sin Anuncios ni Pop-ups)
-                </span>
-                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                  <span style={{ fontSize: '13px', color: '#aaa' }}>Audio:</span>
-                  <button 
-                    onClick={() => setActiveAudioTrack('latino')}
-                    style={{ backgroundColor: activeAudioTrack === 'latino' ? '#e50914' : '#333', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}
-                  >
-                    🇪🇸 Español Latino
-                  </button>
-                  <button 
-                    onClick={() => setActiveAudioTrack('ingles')}
-                    style={{ backgroundColor: activeAudioTrack === 'ingles' ? '#e50914' : '#333', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}
-                  >
-                    🇬🇧 Inglés
-                  </button>
-                </div>
+              {/* Selector de servidores por si necesitas cambiar de opción */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '13px', color: '#aaa', fontWeight: 'bold' }}>Servidor Automático:</span>
+                <button 
+                  onClick={() => setVideoProvider('multiembed')}
+                  style={{ backgroundColor: videoProvider === 'multiembed' ? '#e50914' : '#222', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}
+                >
+                  Servidor Principal (Alta Calidad)
+                </button>
+                <button 
+                  onClick={() => setVideoProvider('vidsrc')}
+                  style={{ backgroundColor: videoProvider === 'vidsrc' ? '#e50914' : '#222', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}
+                >
+                  Servidor de Respaldo
+                </button>
               </div>
 
-              {/* Contenedor del video HTML5 nativo */}
-              <div style={{ backgroundColor: '#000', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.8)' }}>
-                <video 
-                  key={activeAudioTrack} // Fuerza la actualización de la pista al cambiar de idioma
-                  controls 
-                  autoPlay
-                  playsInline
-                  style={{ width: '100%', maxHeight: '500px', display: 'block' }}
-                >
-                  <source src={videoSources[activeAudioTrack]} type="video/mp4" />
-                  <track kind="subtitles" src="" srcLang="es" label="Español Latino" default />
-                  Tu navegador no soporta la etiqueta de video.
-                </video>
+              {/* Contenedor del reproductor */}
+              <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden', borderRadius: '8px', boxShadow: '0 4px 20px rgba(0,0,0,0.8)', backgroundColor: '#000' }}>
+                <iframe 
+                  src={getEmbedUrl()} 
+                  title="Reproductor de streaming automático" 
+                  style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                  allowFullScreen
+                ></iframe>
               </div>
 
               {/* Enlace alternativo de tráiler */}
