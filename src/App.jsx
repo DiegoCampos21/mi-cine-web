@@ -20,25 +20,25 @@ function App() {
   
   const API_KEY = import.meta.env.VITE_TMDB_API_KEY;
 
-  // Servidores filtrados exclusivamente para priorizar Español Latino
+  // Servidores purgados: Ecosistema 100% Latino
   const servers = [
     { 
-      name: 'Servidor 1 (UnLimPlay - 100% Latino)', 
+      name: 'Servidor 1 (UnLimPlay - Principal)', 
       getUrl: (type, id) => type === 'movie' 
         ? `https://unlimplay.com/f/embed/movie/${id}` 
         : `https://unlimplay.com/f/embed/tv/${id}/1/1` 
     },
     { 
-      name: 'Servidor 2 (AutoEmbed - Forzado Latino)', 
+      name: 'Servidor 2 (Tomatomatela)', 
       getUrl: (type, id) => type === 'movie' 
-        ? `https://autoembed.co/movie/tmdb/${id}?lang=es-MX` 
-        : `https://autoembed.co/tv/tmdb/${id}-1-1?lang=es-MX` 
+        ? `https://tomatomatela.com/embed/movie/${id}` 
+        : `https://tomatomatela.com/embed/tv/${id}/1/1` 
     },
     { 
-      name: 'Servidor 3 (SmashyStream - Multi-Latino)', 
+      name: 'Servidor 3 (PelisAPI)', 
       getUrl: (type, id) => type === 'movie' 
-        ? `https://embed.smashystream.com/playere.php?tmdb=${id}` 
-        : `https://embed.smashystream.com/playere.php?tmdb=${id}&season=1&episode=1` 
+        ? `https://pelisapi.com/embed/movie/${id}` 
+        : `https://pelisapi.com/embed/tv/${id}/1/1` 
     }
   ];
 
@@ -83,7 +83,7 @@ function App() {
   const handleSelectItem = (item) => {
     setSelectedItem(item);
     setItemTrailer(null);
-    setServerIndex(0); // Inicia siempre en UnLimPlay
+    setServerIndex(0); // Forzar siempre el inicio en UnLimPlay
 
     axios.get(`https://api.themoviedb.org/3/${contentType}/${item.id}/videos?api_key=${API_KEY}&language=es-MX`)
       .then(response => {
@@ -148,8 +148,8 @@ function App() {
               
               <div style={{ backgroundColor: '#1a1a1a', borderLeft: '4px solid #e50914', padding: '10px', marginBottom: '15px', borderRadius: '4px' }}>
                 <p style={{ color: '#fff', fontSize: '13px', margin: 0 }}>
-                  💡 <strong>Instrucciones:</strong> El <strong>Servidor 1 (UnLimPlay)</strong> es el principal para Español Latino. Si una película no carga o buscas una calidad diferente, cambia a los Servidores 2 o 3, los cuales intentarán forzar la pista de audio hispana.
-                  <br/><br/>🛡️ Obligatorio usar <strong>Brave Browser</strong> o instalar <strong>uBlock Origin</strong> para bloquear la publicidad de los servidores.
+                  💡 <strong>Catálogo 100% Latino:</strong> El <strong>Servidor 1</strong> es tu motor principal. Los servidores 2 y 3 son archivos históricos; si no cargan, es porque el dominio fuente está inactivo o en mantenimiento temporal.
+                  <br/><br/>🛡️ Obligatorio usar <strong>Brave Browser</strong> o instalar <strong>uBlock Origin</strong> para bloquear ventanas emergentes.
                 </p>
               </div>
 
