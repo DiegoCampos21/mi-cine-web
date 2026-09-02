@@ -13,6 +13,10 @@ function App() {
   const [selectedItem, setSelectedItem] = useState(null);
   const [itemTrailer, setItemTrailer] = useState(null);
 
+  // Estados para reproductores externos personalizados (estilo Seekee / Embed)
+  const [customEmbedUrl, setCustomEmbedUrl] = useState('');
+  const [savedEmbeds, setSavedEmbeds] = useState({}); // Guarda los enlaces personalizados por ID de película
+
   // Estados para el reproductor local/URL
   const [videoUrl, setVideoUrl] = useState('');
   const [customVideoSource, setCustomVideoSource] = useState('');
@@ -70,6 +74,7 @@ function App() {
   const handleSelectItem = (item) => {
     setSelectedItem(item);
     setItemTrailer(null);
+    setCustomEmbedUrl(savedEmbeds[item.id] || ''); // Carga el embed guardado si existe
 
     axios.get(`https://api.themoviedb.org/3/${contentType}/${item.id}/videos?api_key=${API_KEY}&language=es-MX`)
       .then(response => {
@@ -85,7 +90,18 @@ function App() {
       .catch(error => console.error("Error al buscar el tráiler:", error));
   };
 
-  // Manejar la carga de archivo local desde la PC o celular
+  const handleSaveEmbed = (e) => {
+    e.preventDefault();
+    if (selectedItem) {
+      setSavedEmbeds(prev => ({
+        ...prev,
+        [selectedItem.id]: customEmbedUrl
+      }));
+      alert("¡Reproductor externo guardado para esta película!");
+    }
+  };
+
+  // Manejar la carga de archivo local
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -94,7 +110,6 @@ function App() {
     }
   };
 
-  // Manejar URL directa de video ingresada por texto
   const handleUrlSubmit = (e) => {
     e.preventDefault();
     if (videoUrl.trim() !== '') {
@@ -186,7 +201,7 @@ function App() {
         </div>
       )}
 
-      {/* VISTA 2: REPRODUCTOR DE LA PELÍCULA / SERIE (DETALLE + STREAMING DE TRÁILER) */}
+      {/* VISTA 2: DETALLE Y REPRODUCTOR DE LA PELÍCULA / SERIE */}
       {activeTab === 'catalog' && selectedItem && (
         <div>
           <button 
@@ -198,27 +213,58 @@ function App() {
 
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '40px', marginTop: '10px', alignItems: 'flex-start' }}>
             
-            {/* Columna Izquierda: Reproductor Principal (El Tráiler actúa como reproductor de la película) */}
+            {/* Columna Izquierda: Reproductor Principal o Embed Externo */}
             <div style={{ flex: 2, minWidth: '300px', maxWidth: '800px' }}>
               <h2 style={{ fontSize: '28px', marginBottom: '15px' }}>▶ Reproduciendo: {selectedItem.title || selectedItem.name}</h2>
               
-              {itemTrailer ? (
+              {/* Si hay un enlace embed personalizado configurado, se muestra; si no, muestra el tráiler de YouTube */}
+              {savedEmbeds[selectedItem.id] ? (
                 <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden', borderRadius: '8px', boxShadow: '0 4px 20px rgba(0,0,0,0.8)', backgroundColor: '#000' }}>
                   <iframe 
-                    src={`https://www.youtube.com/embed/${itemTrailer}?autoplay=1`} 
-                    title="Reproductor de video oficial" 
+                    src={savedEmbeds[selectedItem.id]} 
+                    title="Reproductor externo" 
+                    style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                    allowFullScreen
+                  ></iframe>
+                </div>
+              ) : itemTrailer ? (
+                <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden', borderRadius: '8px', boxShadow: '0 4px 20px rgba(0,0,0,0.8)', backgroundColor: '#000' }}>
+                  <iframe 
+                    src={`https://www.youtube.com/embed/${itemTrailer}`} 
+                    title="Tráiler oficial" 
                     style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
                     allowFullScreen
                   ></iframe>
                 </div>
               ) : (
-                <div style={{ height: '400px', backgroundColor: '#222', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#aaa', fontStyle: 'italic' }}>
-                  No hay reproductor o contenido multimedia disponible para este título.
+                <div style={{ height: '350px', backgroundColor: '#222', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#aaa', fontStyle: 'italic' }}>
+                  No hay reproductor configurado. Añade un enlace externo abajo.
                 </div>
               )}
 
-              {/* Información y Sinopsis debajo del reproductor */}
+              {/* Panel para configurar enlace de reproductor estilo Seekee / Embed */}
+              <div style={{ marginTop: '20px', backgroundColor: '#1a1a1a', padding: '15px', borderRadius: '8px', border: '1px solid #333' }}>
+                <h4 style={{ margin: '0 0 10px 0', color: '#e50914' }}>🔗 Configurar reproductor externo (Embed / Servidor)</h4>
+                <form onSubmit={handleSaveEmbed} style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                  <input 
+                    type="url" 
+                    placeholder="Pega el enlace embed del servidor de video..." 
+                    value={customEmbedUrl}
+                    onChange={(e) => setCustomEmbedUrl(e.target.value)}
+                    style={{ flex: 1, padding: '10px', borderRadius: '4px', border: '1px solid #444', backgroundColor: '#222', color: '#fff', fontSize: '14px', minWidth: '220px' }}
+                  />
+                  <button 
+                    type="submit"
+                    style={{ backgroundColor: '#e50914', color: '#fff', border: 'none', padding: '10px 15px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
+                  >
+                    Guardar Fuente
+                  </button>
+                </form>
+              </div>
+
+              {/* Información y Sinopsis */}
               <div style={{ marginTop: '20px' }}>
                 <p style={{ color: '#aaa', fontSize: '14px', marginBottom: '15px' }}>
                   📅 Estreno: {selectedItem.release_date || selectedItem.first_air_date || 'Desconocida'} | ⭐ Calificación: {selectedItem.vote_average} / 10
@@ -230,7 +276,7 @@ function App() {
               </div>
             </div>
 
-            {/* Columna Derecha: Póster y Datos Rápidos */}
+            {/* Columna Derecha: Póster */}
             <div style={{ flex: 1, minWidth: '220px', textAlign: 'center' }}>
               {selectedItem.poster_path && (
                 <img 
