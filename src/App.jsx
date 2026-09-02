@@ -88,7 +88,7 @@ function App() {
       .catch(error => console.error("Error al buscar el tráiler:", error));
   };
 
-  // URL fija exclusiva para el servidor multibuide/multiembed en alta calidad
+  // URL del servidor multiembed
   const getEmbedUrl = () => {
     if (!selectedItem) return '';
     const id = selectedItem.id;
@@ -212,38 +212,37 @@ function App() {
 
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '40px', marginTop: '10px', alignItems: 'flex-start' }}>
             
-            {/* Columna Izquierda: Reproductor Principal Protegido contra Pop-ups */}
+            {/* Columna Izquierda: Reproductor Principal */}
             <div style={{ flex: 2, minWidth: '300px', maxWidth: '800px' }}>
               <h2 style={{ fontSize: '28px', marginBottom: '15px' }}>▶ Reproduciendo: {selectedItem.title || selectedItem.name}</h2>
               
-              {/* Barra de Estado y Preferencia */}
+              {/* Barra de Preferencia Visual de Audio */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '10px' }}>
-                <span style={{ fontSize: '13px', color: '#46d369', fontWeight: 'bold' }}>
-                  🛡️ Protección Anti-Anuncios y Pop-ups Activa
+                <span style={{ fontSize: '13px', color: '#aaa' }}>
+                  💡 Utiliza el menú dentro del reproductor para cambiar la fuente o idioma.
                 </span>
                 <div style={{ display: 'flex', gap: '8px' }}>
                   <button 
                     onClick={() => setAudioPreference('Latino')}
                     style={{ backgroundColor: audioPreference === 'Latino' ? '#e50914' : '#222', color: '#fff', border: 'none', padding: '5px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}
                   >
-                    Opción Preferida: Español Latino
+                    Español Latino
                   </button>
                   <button 
                     onClick={() => setAudioPreference('Ingles')}
                     style={{ backgroundColor: audioPreference === 'Ingles' ? '#e50914' : '#222', color: '#fff', border: 'none', padding: '5px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}
                   >
-                    Opción Preferida: Inglés / Sub
+                    Inglés / Sub
                   </button>
                 </div>
               </div>
 
-              {/* Contenedor del reproductor con sandboxing estricto para bloquear ventanas emergentes */}
+              {/* Contenedor del reproductor sin sandbox para evitar bloqueos */}
               <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden', borderRadius: '8px', boxShadow: '0 4px 20px rgba(0,0,0,0.8)', backgroundColor: '#000' }}>
                 <iframe 
                   src={getEmbedUrl()} 
-                  title="Reproductor de streaming protegido" 
+                  title="Reproductor de streaming" 
                   style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
-                  sandbox="allow-scripts allow-same-origin allow-presentation"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
                   allowFullScreen
                 ></iframe>
