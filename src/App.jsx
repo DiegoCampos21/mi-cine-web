@@ -12,7 +12,7 @@ function App() {
   const [totalPages, setTotalPages] = useState(1);
   const [selectedItem, setSelectedItem] = useState(null);
   const [itemTrailer, setItemTrailer] = useState(null);
-  const [videoProvider, setVideoProvider] = useState('multiembed'); // Servidor automático principal
+  const [selectedLanguage, setSelectedLanguage] = PARTICULAR_LANG => useState('latino'); // 'latino', 'castellano' o 'ingles'
 
   // Estados para el reproductor local/URL personalizada
   const [videoUrl, setVideoUrl] = useState('');
@@ -71,7 +71,7 @@ function App() {
   const handleSelectItem = (item) => {
     setSelectedItem(item);
     setItemTrailer(null);
-    setVideoProvider('multiembed'); // Mantener el mejor servidor por defecto
+    setSelectedLanguage('latino'); // Forzar latino por defecto
 
     // Buscar tráiler oficial en YouTube como respaldo
     axios.get(`https://api.themoviedb.org/3/${contentType}/${item.id}/videos?api_key=${API_KEY}&language=es-MX`)
@@ -88,19 +88,16 @@ function App() {
       .catch(error => console.error("Error al buscar el tráiler:", error));
   };
 
-  // Generador automático de URL por ID de TMDB
+  // Generador inteligente con soporte de idioma forzado por parámetros de API de streaming abierta
   const getEmbedUrl = () => {
     if (!selectedItem) return '';
     const id = selectedItem.id;
 
-    if (videoProvider === 'multiembed') {
-      return contentType === 'movie'
-        ? `https://multiembed.mov/?video_id=${id}&tmdb=1`
-        : `https://multiembed.mov/?video_id=${id}&tmdb=1&s=1&e=1`;
-    } else if (videoProvider === 'vidsrc') {
-      return contentType === 'movie' 
-        ? `https://vidsrc.me/embed/movie?tmdb=${id}` 
-        : `https://vidsrc.me/embed/tv?tmdb=${id}`;
+    // Empleamos rutas optimizadas que aceptan parámetros de forzado de idioma en español latino
+    if (contentType === 'movie') {
+      return `https://vidsrc.me/embed/movie?tmdb=${id}&dsLang=${selectedLanguage}`;
+    } else {
+      return `https://vidsrc.me/embed/tv?tmdb=${id}&dsLang=${selectedLanguage}`;
     }
   };
 
@@ -126,7 +123,7 @@ function App() {
       {/* Barra de Navegación Superior Global */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #333', paddingBottom: '15px', marginBottom: '20px', flexWrap: 'wrap', gap: '15px' }}>
         <h1 style={{ margin: 0, color: '#e50914', cursor: 'pointer' }} onClick={() => { setActiveTab('catalog'); setSelectedItem(null); }}>
-          🎬 Mi Plataforma de Cine
+          🎬 Mi Plataforma de Cine Pro
         </h1>
         
         <div style={{ display: 'flex', gap: '10px' }}>
@@ -216,32 +213,39 @@ function App() {
 
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '40px', marginTop: '10px', alignItems: 'flex-start' }}>
             
-            {/* Columna Izquierda: Reproductor Automático con Selector de Respaldo */}
+            {/* Columna Izquierda: Reproductor Principal con Selector de Idioma */}
             <div style={{ flex: 2, minWidth: '300px', maxWidth: '800px' }}>
               <h2 style={{ fontSize: '28px', marginBottom: '15px' }}>▶ Reproduciendo: {selectedItem.title || selectedItem.name}</h2>
               
-              {/* Selector de servidores por si necesitas cambiar de opción */}
+              {/* Selector de Idioma Exclusivo */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px', flexWrap: 'wrap' }}>
-                <span style={{ fontSize: '13px', color: '#aaa', fontWeight: 'bold' }}>Servidor Automático:</span>
+                <span style={{ fontSize: '13px', color: '#aaa', fontWeight: 'bold' }}>Forzar Idioma de Audio:</span>
                 <button 
-                  onClick={() => setVideoProvider('multiembed')}
-                  style={{ backgroundColor: videoProvider === 'multiembed' ? '#e50914' : '#222', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}
+                  onClick={() => setSelectedLanguage('latino')}
+                  style={{ backgroundColor: selectedLanguage === 'latino' ? '#e50914' : '#222', color: '#fff', border: 'none', padding: '6px 14px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}
                 >
-                  Servidor Principal (Alta Calidad)
+                  🇪🇸 Español Latino
                 </button>
                 <button 
-                  onClick={() => setVideoProvider('vidsrc')}
-                  style={{ backgroundColor: videoProvider === 'vidsrc' ? '#e50914' : '#222', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}
+                  onClick={() => setSelectedLanguage('castellano')}
+                  style={{ backgroundColor: selectedLanguage === 'castellano' ? '#e50914' : '#222', color: '#fff', border: 'none', padding: '6px 14px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}
                 >
-                  Servidor de Respaldo
+                  🇪🇸 Español España
+                </button>
+                <button 
+                  onClick={() => setSelectedLanguage('ingles')}
+                  style={{ backgroundColor: selectedLanguage === 'ingles' ? '#e50914' : '#222', color: '#fff', border: 'none', padding: '6px 14px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}
+                >
+                  🇬🇧 Inglés / Sub
                 </button>
               </div>
 
               {/* Contenedor del reproductor */}
               <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden', borderRadius: '8px', boxShadow: '0 4px 20px rgba(0,0,0,0.8)', backgroundColor: '#000' }}>
                 <iframe 
+                  key={selectedLanguage} // Fuerza la recarga inmediata al cambiar de idioma
                   src={getEmbedUrl()} 
-                  title="Reproductor de streaming automático" 
+                  title="Reproductor de streaming en español" 
                   style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
                   allowFullScreen
