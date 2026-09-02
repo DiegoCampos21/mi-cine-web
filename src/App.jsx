@@ -20,7 +20,7 @@ function App() {
   
   const API_KEY = import.meta.env.VITE_TMDB_API_KEY;
 
-  // Servidores actualizados: Prioridad 100% Español Latino
+  // Servidores filtrados exclusivamente para priorizar Español Latino
   const servers = [
     { 
       name: 'Servidor 1 (UnLimPlay - 100% Latino)', 
@@ -29,16 +29,16 @@ function App() {
         : `https://unlimplay.com/f/embed/tv/${id}/1/1` 
     },
     { 
-      name: 'Servidor 2 (VidLink - Dual Audio ⚙️)', 
+      name: 'Servidor 2 (AutoEmbed - Forzado Latino)', 
       getUrl: (type, id) => type === 'movie' 
-        ? `https://vidlink.pro/movie/${id}?primaryColor=e50914` 
-        : `https://vidlink.pro/tv/${id}/1/1?primaryColor=e50914` 
+        ? `https://autoembed.co/movie/tmdb/${id}?lang=es-MX` 
+        : `https://autoembed.co/tv/tmdb/${id}-1-1?lang=es-MX` 
     },
     { 
-      name: 'Servidor 3 (VidSrc PRO - Global)', 
+      name: 'Servidor 3 (SmashyStream - Multi-Latino)', 
       getUrl: (type, id) => type === 'movie' 
-        ? `https://vidsrc.pro/embed/movie/${id}` 
-        : `https://vidsrc.pro/embed/tv/${id}/1/1` 
+        ? `https://embed.smashystream.com/playere.php?tmdb=${id}` 
+        : `https://embed.smashystream.com/playere.php?tmdb=${id}&season=1&episode=1` 
     }
   ];
 
@@ -148,8 +148,8 @@ function App() {
               
               <div style={{ backgroundColor: '#1a1a1a', borderLeft: '4px solid #e50914', padding: '10px', marginBottom: '15px', borderRadius: '4px' }}>
                 <p style={{ color: '#fff', fontSize: '13px', margin: 0 }}>
-                  💡 <strong>Instrucciones de Idioma:</strong> El <strong>Servidor 1 (UnLimPlay)</strong> extrae contenido exclusivamente de páginas latinas. Si un video es muy nuevo y no carga ahí, cambia al <strong>Servidor 2 (VidLink)</strong> y usa su ícono de engranaje (⚙️) para activar la pista "Spanish".
-                  <br/><br/>🛡️ Obligatorio usar <strong>Brave Browser</strong> o instalar <strong>uBlock Origin</strong> para bloquear la publicidad de los servidores gratuitos.
+                  💡 <strong>Instrucciones:</strong> El <strong>Servidor 1 (UnLimPlay)</strong> es el principal para Español Latino. Si una película no carga o buscas una calidad diferente, cambia a los Servidores 2 o 3, los cuales intentarán forzar la pista de audio hispana.
+                  <br/><br/>🛡️ Obligatorio usar <strong>Brave Browser</strong> o instalar <strong>uBlock Origin</strong> para bloquear la publicidad de los servidores.
                 </p>
               </div>
 
