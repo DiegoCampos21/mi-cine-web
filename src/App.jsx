@@ -12,6 +12,7 @@ function App() {
   const [totalPages, setTotalPages] = useState(1);
   const [selectedItem, setSelectedItem] = useState(null);
   const [itemTrailer, setItemTrailer] = useState(null);
+  const [serverIndex, setServerIndex] = useState(0); // Selector de reproductor avanzado
 
   // Estados para el reproductor local/URL personalizada
   const [videoUrl, setVideoUrl] = useState('');
@@ -19,6 +20,22 @@ function App() {
   const fileInputRef = useRef(null);
   
   const API_KEY = import.meta.env.VITE_TMDB_API_KEY;
+
+  // Servidores de nueva generación con soporte Multi-Audio (Selector de pistas integrado)
+  const servers = [
+    { 
+      name: 'VidLink (Multi-Audio y Subs)', 
+      getUrl: (type, id) => type === 'movie' ? `https://vidlink.pro/movie/${id}` : `https://vidlink.pro/tv/${id}/1/1` 
+    },
+    { 
+      name: 'AutoEmbed (Múltiples Servidores)', 
+      getUrl: (type, id) => type === 'movie' ? `https://autoembed.co/movie/tmdb/${id}` : `https://autoembed.co/tv/tmdb/${id}-1-1` 
+    },
+    { 
+      name: 'MultiEmbed (Alta Calidad / GDrive)', 
+      getUrl: (type, id) => type === 'movie' ? `https://multiembed.mov/?video_id=${id}&tmdb=1` : `https://multiembed.mov/?video_id=${id}&tmdb=1&s=1&e=1` 
+    }
+  ];
 
   // 1. Cargar géneros y reiniciar página al cambiar de tipo
   useEffect(() => {
@@ -70,6 +87,7 @@ function App() {
   const handleSelectItem = (item) => {
     setSelectedItem(item);
     setItemTrailer(null);
+    setServerIndex(0); // Empezar siempre con VidLink (el mejor para elegir audio)
 
     // Buscar tráiler oficial en YouTube como respaldo
     axios.get(`https://api.themoviedb.org/3/${contentType}/${item.id}/videos?api_key=${API_KEY}&language=es-MX`)
@@ -86,18 +104,7 @@ function App() {
       .catch(error => console.error("Error al buscar el tráiler:", error));
   };
 
-  // URL automatizada forzando los parámetros de audio y subtítulos en español latino (es-MX)
-  const getEmbedUrl = () => {
-    if (!selectedItem) return '';
-    const id = selectedItem.id;
-
-    if (contentType === 'movie') {
-      return `https://vidsrc.cc/v2/embed/movie/${id}?autoPlay=true&lang=es&dsLang=es&sub=es`;
-    } else {
-      return `https://vidsrc.cc/v2/embed/tv/${id}?autoPlay=true&lang=es&dsLang=es&sub=es`;
-    }
-  };
-
+  // Manejar la carga de archivo local
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -119,7 +126,7 @@ function App() {
       {/* Barra de Navegación Superior Global */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #333', paddingBottom: '15px', marginBottom: '20px', flexWrap: 'wrap', gap: '15px' }}>
         <h1 style={{ margin: 0, color: '#e50914', cursor: 'pointer' }} onClick={() => { setActiveTab('catalog'); setSelectedItem(null); }}>
-          🎬 Mi Cine Latino Pro
+          🎬 Mi Plataforma de Cine Pro
         </h1>
         
         <div style={{ display: 'flex', gap: '10px' }}>
@@ -197,7 +204,7 @@ function App() {
         </div>
       )}
 
-      {/* VISTA 2: DETALLE Y REPRODUCTOR */}
+      {/* VISTA 2: DETALLE Y REPRODUCTOR CON SELECTOR MULTI-AUDIO */}
       {activeTab === 'catalog' && selectedItem && (
         <div>
           <button 
@@ -213,15 +220,36 @@ function App() {
             <div style={{ flex: 2, minWidth: '300px', maxWidth: '800px' }}>
               <h2 style={{ fontSize: '28px', marginBottom: '15px' }}>▶ Reproduciendo: {selectedItem.title || selectedItem.name}</h2>
               
-              <p style={{ color: '#46d369', fontSize: '13px', marginBottom: '15px', fontWeight: 'bold' }}>
-                🟢 Servidor con parámetros estrictos de audio y subtítulos en español aplicados.
-              </p>
+              <div style={{ backgroundColor: '#1a1a1a', borderLeft: '4px solid #e50914', padding: '10px', marginBottom: '15px', borderRadius: '4px' }}>
+                <p style={{ color: '#fff', fontSize: '13px', margin: 0 }}>
+                  💡 <strong>Tip de Idioma:</strong> Usa los controles ⚙️ dentro del reproductor de <strong>VidLink</strong> para alternar entre audios (Español Latino) y subtítulos. 
+                  <br/><span style={{ color: '#aaa' }}>(Usa uBlock Origin o Brave Browser para bloquear pop-ups)</span>
+                </p>
+              </div>
+
+              {/* Botones de selección de servidores avanzados */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '15px', flexWrap: 'wrap' }}>
+                {servers.map((srv, idx) => (
+                  <button 
+                    key={idx}
+                    onClick={() => setServerIndex(idx)}
+                    style={{ 
+                      backgroundColor: serverIndex === idx ? '#e50914' : '#222', 
+                      color: '#fff', border: 'none', padding: '8px 12px', borderRadius: '4px', 
+                      cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' 
+                    }}
+                  >
+                    {srv.name}
+                  </button>
+                ))}
+              </div>
 
               {/* Contenedor del reproductor */}
               <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden', borderRadius: '8px', boxShadow: '0 4px 20px rgba(0,0,0,0.8)', backgroundColor: '#000' }}>
                 <iframe 
-                  src={getEmbedUrl()} 
-                  title="Reproductor de streaming latino" 
+                  key={serverIndex}
+                  src={servers[serverIndex].getUrl(contentType, selectedItem.id)} 
+                  title="Reproductor de streaming" 
                   style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
                   allowFullScreen
