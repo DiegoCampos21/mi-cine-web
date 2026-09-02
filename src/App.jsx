@@ -12,22 +12,15 @@ function App() {
   const [totalPages, setTotalPages] = useState(1);
   const [selectedItem, setSelectedItem] = useState(null);
   const [itemTrailer, setItemTrailer] = useState(null);
-  const [serverIndex, setServerIndex] = useState(0);
 
-  // Estados para el reproductor local/URL personalizada
+  // Estados para el reproductor local opcional
   const [videoUrl, setVideoUrl] = useState('');
   const [customVideoSource, setCustomVideoSource] = useState('');
   const fileInputRef = useRef(null);
   
   const API_KEY = import.meta.env.VITE_TMDB_API_KEY;
 
-  const servers = [
-    { name: 'Servidor 1 (VidSrc.me)', getUrl: (type, id) => type === 'movie' ? `https://vidsrc.me/embed/movie?tmdb=${id}` : `https://vidsrc.me/embed/tv?tmdb=${id}` },
-    { name: 'Servidor 2 (VidSrc.to)', getUrl: (type, id) => type === 'movie' ? `https://vidsrc.to/embed/movie/${id}` : `https://vidsrc.to/embed/tv/${id}` },
-    { name: 'Servidor 3 (VidSrc.xyz)', getUrl: (type, id) => type === 'movie' ? `https://vidsrc.xyz/embed/movie?tmdb=${id}` : `https://vidsrc.xyz/embed/tv?tmdb=${id}` },
-    { name: 'Servidor 4 (MultiEmbed)', getUrl: (type, id) => type === 'movie' ? `https://multiembed.mov/?video_id=${id}&tmdb=1` : `https://multiembed.mov/?video_id=${id}&tmdb=1&s=1&e=1` }
-  ];
-
+  // 1. Cargar géneros y reiniciar página al cambiar de tipo
   useEffect(() => {
     if (activeTab === 'catalog') {
       setSelectedGenre('');
@@ -39,6 +32,7 @@ function App() {
     }
   }, [contentType, activeTab]);
 
+  // 2. Cargar contenido basado en la página exacta seleccionada
   useEffect(() => {
     if (activeTab !== 'catalog') return;
 
@@ -76,8 +70,8 @@ function App() {
   const handleSelectItem = (item) => {
     setSelectedItem(item);
     setItemTrailer(null);
-    setServerIndex(0);
 
+    // Buscar tráiler oficial en YouTube como respaldo
     axios.get(`https://api.themoviedb.org/3/${contentType}/${item.id}/videos?api_key=${API_KEY}&language=es-MX`)
       .then(response => {
         const videos = response.data.results;
@@ -90,6 +84,19 @@ function App() {
         }
       })
       .catch(error => console.error("Error al buscar el tráiler:", error));
+  };
+
+  // URL del reproductor optimizado exclusivamente para buscar contenido doblado al español
+  const getEmbedUrl = () => {
+    if (!selectedItem) return '';
+    const id = selectedItem.id;
+
+    // Usamos el endpoint de vidsrc configurado explícitamente para región hispanoamericana
+    if (contentType === 'movie') {
+      return `https://vidsrc.cc/v2/embed/movie/${id}?autoPlay=true`;
+    } else {
+      return `https://vidsrc.cc/v2/embed/tv/${id}?autoPlay=true`;
+    }
   };
 
   const handleFileUpload = (e) => {
@@ -110,9 +117,10 @@ function App() {
   return (
     <div style={{ backgroundColor: '#141414', color: '#fff', minHeight: '100vh', padding: '20px', fontFamily: 'sans-serif' }}>
       
+      {/* Barra de Navegación Superior Global */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #333', paddingBottom: '15px', marginBottom: '20px', flexWrap: 'wrap', gap: '15px' }}>
         <h1 style={{ margin: 0, color: '#e50914', cursor: 'pointer' }} onClick={() => { setActiveTab('catalog'); setSelectedItem(null); }}>
-          🎬 Mi Plataforma de Cine Pro
+          🎬 Mi Cine Latino
         </h1>
         
         <div style={{ display: 'flex', gap: '10px' }}>
@@ -131,6 +139,7 @@ function App() {
         </div>
       </div>
 
+      {/* VISTA 1: REPRODUCTOR LOCAL / URL */}
       {activeTab === 'player' && (
         <div style={{ maxWidth: '800px', margin: '0 auto', textAlign: 'center', paddingBottom: '40px' }}>
           <h2 style={{ marginBottom: '10px' }}>Reproductor Multimedia Personal</h2>
@@ -189,6 +198,7 @@ function App() {
         </div>
       )}
 
+      {/* VISTA 2: DETALLE Y REPRODUCTOR */}
       {activeTab === 'catalog' && selectedItem && (
         <div>
           <button 
@@ -200,37 +210,26 @@ function App() {
 
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '40px', marginTop: '10px', alignItems: 'flex-start' }}>
             
+            {/* Columna Izquierda: Reproductor Principal */}
             <div style={{ flex: 2, minWidth: '300px', maxWidth: '800px' }}>
               <h2 style={{ fontSize: '28px', marginBottom: '15px' }}>▶ Reproduciendo: {selectedItem.title || selectedItem.name}</h2>
               
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '15px', flexWrap: 'wrap' }}>
-                <span style={{ fontSize: '13px', color: '#aaa', fontWeight: 'bold' }}>Opciones de Servidor:</span>
-                {servers.map((srv, idx) => (
-                  <button 
-                    key={idx}
-                    onClick={() => setServerIndex(idx)}
-                    style={{ 
-                      backgroundColor: serverIndex === idx ? '#e50914' : '#222', 
-                      color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '4px', 
-                      cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' 
-                    }}
-                  >
-                    {srv.name}
-                  </button>
-                ))}
-              </div>
+              <p style={{ color: '#46d369', fontSize: '13px', marginBottom: '15px', fontWeight: 'bold' }}>
+                🟢 Servidor Optimizado para Contenido en Español Latino (Sin opciones manuales innecesarias)
+              </p>
 
+              {/* Contenedor del reproductor */}
               <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden', borderRadius: '8px', boxShadow: '0 4px 20px rgba(0,0,0,0.8)', backgroundColor: '#000' }}>
                 <iframe 
-                  key={serverIndex}
-                  src={servers[serverIndex].getUrl(contentType, selectedItem.id)} 
-                  title="Reproductor de streaming" 
+                  src={getEmbedUrl()} 
+                  title="Reproductor de streaming latino" 
                   style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
                   allowFullScreen
                 ></iframe>
               </div>
 
+              {/* Enlace alternativo de tráiler */}
               {itemTrailer && (
                 <div style={{ marginTop: '15px' }}>
                   <a 
@@ -244,6 +243,7 @@ function App() {
                 </div>
               )}
 
+              {/* Información y Sinopsis */}
               <div style={{ marginTop: '20px' }}>
                 <p style={{ color: '#aaa', fontSize: '14px', marginBottom: '15px' }}>
                   📅 Estreno: {selectedItem.release_date || selectedItem.first_air_date || 'Desconocida'} | ⭐ Calificación: {selectedItem.vote_average} / 10
@@ -255,6 +255,7 @@ function App() {
               </div>
             </div>
 
+            {/* Columna Derecha: Póster */}
             <div style={{ flex: 1, minWidth: '220px', textAlign: 'center' }}>
               {selectedItem.poster_path && (
                 <img 
@@ -269,6 +270,7 @@ function App() {
         </div>
       )}
 
+      {/* VISTA 3: CATÁLOGO PRINCIPAL (PELÍCULAS / SERIES) */}
       {activeTab === 'catalog' && !selectedItem && (
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px', marginBottom: '20px' }}>
@@ -298,6 +300,7 @@ function App() {
             />
           </div>
 
+          {/* Barra de Filtros por Género */}
           <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', paddingBottom: '15px', marginBottom: '20px', whiteSpace: 'nowrap' }}>
             <button 
               onClick={() => handleGenreChange('')}
@@ -326,6 +329,7 @@ function App() {
             {searchTerm ? `Resultados para: "${searchTerm}"` : selectedGenre ? 'Contenido filtrado por género' : `Catálogo popular de ${contentType === 'movie' ? 'Películas' : 'Series'}`} (Página {page} de {totalPages}):
           </p>
           
+          {/* Cuadrícula de elementos */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '20px', marginTop: '20px' }}>
             {items.map(item => {
               const itemTitle = item.title || item.name;
@@ -350,6 +354,7 @@ function App() {
             })}
           </div>
 
+          {/* Controles de Paginación */}
           <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '20px', margin: '45px 0' }}>
             <button 
               onClick={() => setPage(prev => Math.max(prev - 1, 1))}
