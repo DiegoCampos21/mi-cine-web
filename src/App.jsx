@@ -1,5 +1,4 @@
-def format_app_jsx():
-    return """import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
 
 function App() {
@@ -52,7 +51,7 @@ function App() {
         .then(response => setGenres(response.data.genres))
         .catch(console.error);
     }
-  }, [contentType, activeTab]);
+  }, [contentType, activeTab, API_KEY]); // <-- Dependencia API_KEY corregida aquí
 
   useEffect(() => {
     if (activeTab !== 'catalog') return;
@@ -67,7 +66,7 @@ function App() {
       setTotalPages(response.data.total_pages > 500 ? 500 : response.data.total_pages);
     }).catch(console.error);
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [searchTerm, selectedGenre, contentType, page, activeTab]);
+  }, [searchTerm, selectedGenre, contentType, page, activeTab, API_KEY]); // <-- Dependencia API_KEY corregida aquí
 
   const handleGenreChange = (genreId) => {
     setSelectedGenre(genreId);
@@ -224,6 +223,3 @@ function App() {
 }
 
 export default App;
-"""
-
-print(format_app_jsx())
