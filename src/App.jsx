@@ -20,25 +20,25 @@ function App() {
   
   const API_KEY = import.meta.env.VITE_TMDB_API_KEY;
 
-  // Ecosistema con respaldos híbridos para priorizar español latino
+  // Modo Estricto Latino: Cero servidores globales o híbridos
   const servers = [
     { 
-      name: 'Servidor 1 (UnLimPlay - 100% Latino)', 
+      name: 'Servidor 1 (UnLimPlay - Principal)', 
       getUrl: (type, id) => type === 'movie' 
         ? `https://unlimplay.com/f/embed/movie/${id}` 
         : `https://unlimplay.com/f/embed/tv/${id}/1/1` 
     },
     { 
-      name: 'Servidor 2 (AutoEmbed - Forzado Latino)', 
+      name: 'Servidor 2 (Tomatomatela - Respaldo)', 
       getUrl: (type, id) => type === 'movie' 
-        ? `https://autoembed.co/movie/tmdb/${id}?lang=es-MX` 
-        : `https://autoembed.co/tv/tmdb/${id}-1-1?lang=es-MX` 
+        ? `https://tomatomatela.com/embed/movie/${id}` 
+        : `https://tomatomatela.com/embed/tv/${id}/1/1` 
     },
     { 
-      name: 'Servidor 3 (SmashyStream)', 
+      name: 'Servidor 3 (PelisAPI - Respaldo)', 
       getUrl: (type, id) => type === 'movie' 
-        ? `https://embed.smashystream.com/playere.php?tmdb=${id}` 
-        : `https://embed.smashystream.com/playere.php?tmdb=${id}&season=1&episode=1` 
+        ? `https://pelisapi.com/embed/movie/${id}` 
+        : `https://pelisapi.com/embed/tv/${id}/1/1` 
     }
   ];
 
@@ -51,7 +51,7 @@ function App() {
         .then(response => setGenres(response.data.genres))
         .catch(console.error);
     }
-  }, [contentType, activeTab, API_KEY]); // <-- Dependencia API_KEY corregida aquí
+  }, [contentType, activeTab, API_KEY]); 
 
   useEffect(() => {
     if (activeTab !== 'catalog') return;
@@ -66,7 +66,7 @@ function App() {
       setTotalPages(response.data.total_pages > 500 ? 500 : response.data.total_pages);
     }).catch(console.error);
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [searchTerm, selectedGenre, contentType, page, activeTab, API_KEY]); // <-- Dependencia API_KEY corregida aquí
+  }, [searchTerm, selectedGenre, contentType, page, activeTab, API_KEY]); 
 
   const handleGenreChange = (genreId) => {
     setSelectedGenre(genreId);
@@ -83,7 +83,7 @@ function App() {
   const handleSelectItem = (item) => {
     setSelectedItem(item);
     setItemTrailer(null);
-    setServerIndex(0); // Inicia siempre en UnLimPlay
+    setServerIndex(0); // Inicia siempre en el motor principal
 
     axios.get(`https://api.themoviedb.org/3/${contentType}/${item.id}/videos?api_key=${API_KEY}&language=es-MX`)
       .then(response => {
@@ -148,8 +148,8 @@ function App() {
               
               <div style={{ backgroundColor: '#1a1a1a', borderLeft: '4px solid #e50914', padding: '10px', marginBottom: '15px', borderRadius: '4px' }}>
                 <p style={{ color: '#fff', fontSize: '13px', margin: 0 }}>
-                  💡 <strong>Sistema de Respaldos:</strong> El <strong>Servidor 1</strong> te dará el audio latino nativo. Si falla, los servidores 2 y 3 intentarán forzar subtítulos o el doblaje. En el Servidor 3, haz clic en los botones internos del video para probar distintas fuentes.
-                  <br/><br/>🛡️ Obligatorio usar <strong>Brave Browser</strong> o instalar <strong>uBlock Origin</strong> para una experiencia limpia.
+                  💡 <strong>Modo Estricto Latino:</strong> Esta plataforma extrae videos exclusivamente de bases de datos hispanas. Si el Servidor 1 falla, prueba los respaldos. Si ninguno conecta, significa que el servidor de origen está caído por saturación.
+                  <br/><br/>🛡️ Obligatorio usar <strong>Brave Browser</strong> o instalar <strong>uBlock Origin</strong>.
                 </p>
               </div>
 
