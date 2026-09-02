@@ -130,8 +130,8 @@ function App() {
       {/* VISTA 1: REPRODUCTOR LOCAL / URL */}
       {activeTab === 'player' && (
         <div style={{ maxWidth: '800px', margin: '0 auto', textAlign: 'center', paddingBottom: '40px' }}>
-          <h2 style={{ marginBottom: '10px' }}>Reproductor de Archivos y URLs</h2>
-          <p style={{ color: '#aaa', marginBottom: '30px' }}>Sube un video de tu equipo o introduce un enlace directo para reproducirlo.</p>
+          <h2 style={{ marginBottom: '10px' }}>Reproductor Multimedia Personal</h2>
+          <p style={{ color: '#aaa', marginBottom: '30px' }}>Sube tus videos en alta definición o introduce un enlace directo compatible.</p>
 
           <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', marginBottom: '30px', flexWrap: 'wrap' }}>
             <div>
@@ -186,7 +186,7 @@ function App() {
         </div>
       )}
 
-      {/* VISTA 2: DETALLE Y REPRODUCTOR AUTOMÁTICO DE LA PELÍCULA / SERIE */}
+      {/* VISTA 2: DETALLE Y REPRODUCTOR INTEGRADO DE LA PELÍCULA / SERIE */}
       {activeTab === 'catalog' && selectedItem && (
         <div>
           <button 
@@ -198,25 +198,25 @@ function App() {
 
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '40px', marginTop: '10px', alignItems: 'flex-start' }}>
             
-            {/* Columna Izquierda: Reproductor Automático basado en el ID de TMDB */}
+            {/* Columna Izquierda: Reproductor Principal */}
             <div style={{ flex: 2, minWidth: '300px', maxWidth: '800px' }}>
               <h2 style={{ fontSize: '28px', marginBottom: '15px' }}>▶ Reproduciendo: {selectedItem.title || selectedItem.name}</h2>
               
-              {/* Reproductor automático integrado (vidsrc.me) */}
+              {/* Contenedor optimizado de streaming */}
               <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden', borderRadius: '8px', boxShadow: '0 4px 20px rgba(0,0,0,0.8)', backgroundColor: '#000' }}>
                 <iframe 
                   src={contentType === 'movie' 
                     ? `https://vidsrc.me/embed/movie?tmdb=${selectedItem.id}` 
                     : `https://vidsrc.me/embed/tv?tmdb=${selectedItem.id}`
                   } 
-                  title="Reproductor automático de streaming" 
+                  title="Reproductor de streaming" 
                   style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
                   allowFullScreen
                 ></iframe>
               </div>
 
-              {/* Enlace alternativo para ver el tráiler oficial en YouTube */}
+              {/* Enlace alternativo de tráiler */}
               {itemTrailer && (
                 <div style={{ marginTop: '15px' }}>
                   <a 
