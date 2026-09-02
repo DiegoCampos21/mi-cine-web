@@ -202,12 +202,12 @@ function App() {
             <div style={{ flex: 2, minWidth: '300px', maxWidth: '800px' }}>
               <h2 style={{ fontSize: '28px', marginBottom: '15px' }}>▶ Reproduciendo: {selectedItem.title || selectedItem.name}</h2>
               
-              {/* Reproductor automático integrado (usa el ID de TMDB de forma dinámica) */}
+              {/* Reproductor automático integrado (vidsrc.me) */}
               <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden', borderRadius: '8px', boxShadow: '0 4px 20px rgba(0,0,0,0.8)', backgroundColor: '#000' }}>
                 <iframe 
                   src={contentType === 'movie' 
-                    ? `https://vidsrc.xyz/embed/movie?tmdb=${selectedItem.id}` 
-                    : `https://vidsrc.xyz/embed/tv?tmdb=${selectedItem.id}`
+                    ? `https://vidsrc.me/embed/movie?tmdb=${selectedItem.id}` 
+                    : `https://vidsrc.me/embed/tv?tmdb=${selectedItem.id}`
                   } 
                   title="Reproductor automático de streaming" 
                   style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
@@ -216,7 +216,7 @@ function App() {
                 ></iframe>
               </div>
 
-              {/* Botón alternativo opcional por si quieres ver el tráiler de YouTube */}
+              {/* Enlace alternativo para ver el tráiler oficial en YouTube */}
               {itemTrailer && (
                 <div style={{ marginTop: '15px' }}>
                   <a 
