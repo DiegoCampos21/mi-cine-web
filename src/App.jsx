@@ -25,7 +25,7 @@ function App() {
   
   const API_KEY = import.meta.env.VITE_TMDB_API_KEY;
 
-  // Motor Único: 100% Latino. Ahora recibe parámetros de temporada y capítulo.
+  // Motor Único: 100% Latino. Recibe parámetros de temporada y capítulo.
   const getUnLimPlayUrl = (type, id, s, e) => type === 'movie' 
     ? `https://unlimplay.com/f/embed/movie/${id}` 
     : `https://unlimplay.com/f/embed/tv/${id}/${s}/${e}`;
@@ -77,7 +77,7 @@ function App() {
   const handleSeasonChange = (e) => {
     const s = parseInt(e.target.value);
     setSelectedSeason(s);
-    setSelectedEpisode(1); // Al cambiar de temporada, volvemos al capítulo 1
+    setSelectedEpisode(1); 
     fetchEpisodes(selectedItem.id, s);
   };
 
@@ -101,7 +101,6 @@ function App() {
     if (contentType === 'tv') {
       axios.get(`https://api.themoviedb.org/3/tv/${item.id}?api_key=${API_KEY}&language=es-MX`)
         .then(res => {
-          // Filtramos la temporada 0 (suelen ser "Especiales" o extras)
           const validSeasons = res.data.seasons.filter(s => s.season_number > 0);
           setSeasons(validSeasons);
           if (validSeasons.length > 0) {
@@ -127,8 +126,8 @@ function App() {
     <div style={{ backgroundColor: '#141414', color: '#fff', minHeight: '100vh', padding: '20px', fontFamily: 'sans-serif' }}>
       
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #333', paddingBottom: '15px', marginBottom: '20px', flexWrap: 'wrap', gap: '15px' }}>
-        <h1 style={{ margin: 0, color: '#ffffff', cursor: 'pointer' }} onClick={() => { setActiveTab('catalog'); setSelectedItem(null); }}>
-          🎬 Mi Cine Web
+        <h1 style={{ margin: 0, cursor: 'pointer' }} onClick={() => { setActiveTab('catalog'); setSelectedItem(null); }}>
+          🎬 <span style={{ color: '#fff' }}>Mi Cine</span> <span style={{ color: '#e50914' }}>Web</span>
         </h1>
         <div style={{ display: 'flex', gap: '10px' }}>
           <button onClick={() => { setActiveTab('catalog'); setSelectedItem(null); }} style={{ backgroundColor: activeTab === 'catalog' ? '#e50914' : '#222', color: '#fff', border: 'none', padding: '10px 20px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>Películas y Series</button>
