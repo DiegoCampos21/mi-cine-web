@@ -12,6 +12,7 @@ function App() {
   const [totalPages, setTotalPages] = useState(1);
   const [selectedItem, setSelectedItem] = useState(null);
   const [itemTrailer, setItemTrailer] = useState(null);
+  const [videoProvider, setVideoProvider] = useState('vidsrc1'); // Selector de proveedores de video
 
   // Estados para el reproductor local/URL personalizada
   const [videoUrl, setVideoUrl] = useState('');
@@ -70,6 +71,7 @@ function App() {
   const handleSelectItem = (item) => {
     setSelectedItem(item);
     setItemTrailer(null);
+    setVideoProvider('vidsrc1'); // Reiniciar al proveedor principal
 
     // Buscar tráiler oficial en YouTube como respaldo
     axios.get(`https://api.themoviedb.org/3/${contentType}/${item.id}/videos?api_key=${API_KEY}&language=es-MX`)
@@ -86,16 +88,23 @@ function App() {
       .catch(error => console.error("Error al buscar el tráiler:", error));
   };
 
-  // URL del reproductor optimizado con soporte de subtítulos integrado en la interfaz
+  // Generador dinámico de URL basado en el proveedor activo (todos dominios activos y sin bloqueos de DNS comunes)
   const getEmbedUrl = () => {
     if (!selectedItem) return '';
     const id = selectedItem.id;
 
-    // Usamos embed.su que incorpora un menú completo de subtítulos y selección de pistas nativas en su reproductor
-    if (contentType === 'movie') {
-      return `https://embed.su/embed/movie/${id}`;
-    } else {
-      return `https://embed.su/embed/tv/${id}`;
+    if (videoProvider === 'vidsrc1') {
+      return contentType === 'movie' 
+        ? `https://vidsrc.me/embed/movie?tmdb=${id}` 
+        : `https://vidsrc.me/embed/tv?tmdb=${id}`;
+    } else if (videoProvider === 'vidsrc2') {
+      return contentType === 'movie' 
+        ? `https://vidsrc.to/embed/movie/${id}` 
+        : `https://vidsrc.to/embed/tv/${id}`;
+    } else if (videoProvider === 'multiembed') {
+      return contentType === 'movie'
+        ? `https://multiembed.mov/?video_id=${id}&tmdb=1`
+        : `https://multiembed.mov/?video_id=${id}&tmdb=1&s=1&e=1`;
     }
   };
 
@@ -211,15 +220,34 @@ function App() {
 
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '40px', marginTop: '10px', alignItems: 'flex-start' }}>
             
-            {/* Columna Izquierda: Reproductor Principal */}
+            {/* Columna Izquierda: Reproductor Principal y Selector de Fuentes */}
             <div style={{ flex: 2, minWidth: '300px', maxWidth: '800px' }}>
               <h2 style={{ fontSize: '28px', marginBottom: '15px' }}>▶ Reproduciendo: {selectedItem.title || selectedItem.name}</h2>
               
-              <p style={{ color: '#aaa', fontSize: '13px', marginBottom: '15px' }}>
-                💡 <em>Nota: Utiliza el icono de engranaje o subtítulos dentro de los controles del reproductor de abajo para desplegar y seleccionar el idioma o subtítulos en español.</em>
-              </p>
+              {/* Selector de Opciones de Servidor por si alguno falla o prefieres otra fuente */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '14px', color: '#aaa', fontWeight: 'bold' }}>Servidor de Reproducción:</span>
+                <button 
+                  onClick={() => setVideoProvider('vidsrc1')}
+                  style={{ backgroundColor: videoProvider === 'vidsrc1' ? '#e50914' : '#222', color: '#fff', border: 'none', padding: '6px 14px', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}
+                >
+                  Servidor A (Principal)
+                </button>
+                <button 
+                  onClick={() => setVideoProvider('vidsrc2')}
+                  style={{ backgroundColor: videoProvider === 'vidsrc2' ? '#e50914' : '#222', color: '#fff', border: 'none', padding: '6px 14px', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}
+                >
+                  Servidor B (Opción 2)
+                </button>
+                <button 
+                  onClick={() => setVideoProvider('multiembed')}
+                  style={{ backgroundColor: videoProvider === 'multiembed' ? '#e50914' : '#222', color: '#fff', border: 'none', padding: '6px 14px', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}
+                >
+                  Servidor C (Multi-idioma)
+                </button>
+              </div>
 
-              {/* Contenedor del reproductor optimizado */}
+              {/* Contenedor del reproductor */}
               <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden', borderRadius: '8px', boxShadow: '0 4px 20px rgba(0,0,0,0.8)', backgroundColor: '#000' }}>
                 <iframe 
                   src={getEmbedUrl()} 
