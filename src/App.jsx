@@ -12,7 +12,7 @@ function App() {
   const [totalPages, setTotalPages] = useState(1);
   const [selectedItem, setSelectedItem] = useState(null);
   const [itemTrailer, setItemTrailer] = useState(null);
-  const [latinoServer, setLatinoServer] = useState('embedsu-lat'); // Selector exclusivo latino
+  const [activeServer, setActiveServer] = useState('vidsrc1'); // Servidor activo sin bloqueos DNS
 
   // Estados para el reproductor local/URL personalizada
   const [videoUrl, setVideoUrl] = useState('');
@@ -71,7 +71,7 @@ function App() {
   const handleSelectItem = (item) => {
     setSelectedItem(item);
     setItemTrailer(null);
-    setLatinoServer('embedsu-lat'); // Proveedor latino por defecto
+    setActiveServer('vidsrc1'); // Servidor por defecto
 
     // Buscar tráiler oficial en YouTube como respaldo
     axios.get(`https://api.themoviedb.org/3/${contentType}/${item.id}/videos?api_key=${API_KEY}&language=es-MX`)
@@ -88,20 +88,19 @@ function App() {
       .catch(error => console.error("Error al buscar el tráiler:", error));
   };
 
-  // URLs de servidores configurados exclusivamente para doblaje en Español Latino
+  // URLs con dominios limpios y activos sin bloqueos de DNS comunes
   const getEmbedUrl = () => {
     if (!selectedItem) return '';
     const id = selectedItem.id;
 
-    if (latinoServer === 'embedsu-lat') {
-      // Forzamos el idioma latino mediante parámetros estrictos de servidor hispano
+    if (activeServer === 'vidsrc1') {
       return contentType === 'movie' 
-        ? `https://embed.su/embed/movie/${id}?audio=lat&language=es` 
-        : `https://embed.su/embed/tv/${id}?audio=lat&language=es`;
-    } else if (latinoServer === 'vidsrc-lat') {
+        ? `https://vidsrc.me/embed/movie?tmdb=${id}` 
+        : `https://vidsrc.me/embed/tv?tmdb=${id}`;
+    } else if (activeServer === 'vidsrc2') {
       return contentType === 'movie' 
-        ? `https://vidsrc.xyz/embed/movie?tmdb=${id}&language=es-MX` 
-        : `https://vidsrc.xyz/embed/tv?tmdb=${id}&language=es-MX`;
+        ? `https://vidsrc.to/embed/movie/${id}` 
+        : `https://vidsrc.to/embed/tv/${id}`;
     }
   };
 
@@ -127,7 +126,7 @@ function App() {
       {/* Barra de Navegación Superior Global */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #333', paddingBottom: '15px', marginBottom: '20px', flexWrap: 'wrap', gap: '15px' }}>
         <h1 style={{ margin: 0, color: '#e50914', cursor: 'pointer' }} onClick={() => { setActiveTab('catalog'); setSelectedItem(null); }}>
-          🎬 Mi Cine - Exclusivo Latino
+          🎬 Mi Cine Personal
         </h1>
         
         <div style={{ display: 'flex', gap: '10px' }}>
@@ -205,7 +204,7 @@ function App() {
         </div>
       )}
 
-      {/* VISTA 2: DETALLE Y REPRODUCTOR EXCLUSIVO LATINO */}
+      {/* VISTA 2: DETALLE Y REPRODUCTOR DE LA PELÍCULA / SERIE */}
       {activeTab === 'catalog' && selectedItem && (
         <div>
           <button 
@@ -217,33 +216,33 @@ function App() {
 
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '40px', marginTop: '10px', alignItems: 'flex-start' }}>
             
-            {/* Columna Izquierda: Reproductor Principal en Español Latino */}
+            {/* Columna Izquierda: Reproductor Principal y Selector de Servidores */}
             <div style={{ flex: 2, minWidth: '300px', maxWidth: '800px' }}>
               <h2 style={{ fontSize: '28px', marginBottom: '15px' }}>▶ Reproduciendo: {selectedItem.title || selectedItem.name}</h2>
               
-              {/* Selector exclusivo de fuentes latinas */}
+              {/* Selector rápido de servidores estables */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px', flexWrap: 'wrap' }}>
-                <span style={{ fontSize: '13px', color: '#46d369', fontWeight: 'bold' }}>Servidor Doblaje Latino:</span>
+                <span style={{ fontSize: '13px', color: '#aaa', fontWeight: 'bold' }}>Cambiar Servidor:</span>
                 <button 
-                  onClick={() => setLatinoServer('embedsu-lat')}
-                  style={{ backgroundColor: latinoServer === 'embedsu-lat' ? '#e50914' : '#222', color: '#fff', border: 'none', padding: '6px 14px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}
+                  onClick={() => setActiveServer('vidsrc1')}
+                  style={{ backgroundColor: activeServer === 'vidsrc1' ? '#e50914' : '#222', color: '#fff', border: 'none', padding: '6px 14px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}
                 >
-                  Servidor Latino 1 (Alta Calidad)
+                  Servidor Principal (vidsrc.me)
                 </button>
                 <button 
-                  onClick={() => setLatinoServer('vidsrc-lat')}
-                  style={{ backgroundColor: latinoServer === 'vidsrc-lat' ? '#e50914' : '#222', color: '#fff', border: 'none', padding: '6px 14px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}
+                  onClick={() => setActiveServer('vidsrc2')}
+                  style={{ backgroundColor: activeServer === 'vidsrc2' ? '#e50914' : '#222', color: '#fff', border: 'none', padding: '6px 14px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}
                 >
-                  Servidor Latino 2 (Respaldo)
+                  Servidor Alternativo (vidsrc.to)
                 </button>
               </div>
 
               {/* Contenedor del reproductor */}
               <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden', borderRadius: '8px', boxShadow: '0 4px 20px rgba(0,0,0,0.8)', backgroundColor: '#000' }}>
                 <iframe 
-                  key={latinoServer}
+                  key={activeServer}
                   src={getEmbedUrl()} 
-                  title="Reproductor de streaming latino" 
+                  title="Reproductor de streaming" 
                   style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
                   allowFullScreen
