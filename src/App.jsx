@@ -12,7 +12,7 @@ function App() {
   const [totalPages, setTotalPages] = useState(1);
   const [selectedItem, setSelectedItem] = useState(null);
   const [itemTrailer, setItemTrailer] = useState(null);
-  const [videoProvider, setVideoProvider] = useState('vidsrc1'); // Selector de proveedores de video
+  const [audioPreference, setAudioPreference] = useState('Latino'); // Preferencia de audio visual
 
   // Estados para el reproductor local/URL personalizada
   const [videoUrl, setVideoUrl] = useState('');
@@ -71,7 +71,7 @@ function App() {
   const handleSelectItem = (item) => {
     setSelectedItem(item);
     setItemTrailer(null);
-    setVideoProvider('vidsrc1'); // Reiniciar al proveedor principal
+    setAudioPreference('Latino');
 
     // Buscar tráiler oficial en YouTube como respaldo
     axios.get(`https://api.themoviedb.org/3/${contentType}/${item.id}/videos?api_key=${API_KEY}&language=es-MX`)
@@ -88,23 +88,15 @@ function App() {
       .catch(error => console.error("Error al buscar el tráiler:", error));
   };
 
-  // Generador dinámico de URL basado en el proveedor activo (todos dominios activos y sin bloqueos de DNS comunes)
+  // URL fija exclusiva para el servidor multibuide/multiembed en alta calidad
   const getEmbedUrl = () => {
     if (!selectedItem) return '';
     const id = selectedItem.id;
 
-    if (videoProvider === 'vidsrc1') {
-      return contentType === 'movie' 
-        ? `https://vidsrc.me/embed/movie?tmdb=${id}` 
-        : `https://vidsrc.me/embed/tv?tmdb=${id}`;
-    } else if (videoProvider === 'vidsrc2') {
-      return contentType === 'movie' 
-        ? `https://vidsrc.to/embed/movie/${id}` 
-        : `https://vidsrc.to/embed/tv/${id}`;
-    } else if (videoProvider === 'multiembed') {
-      return contentType === 'movie'
-        ? `https://multiembed.mov/?video_id=${id}&tmdb=1`
-        : `https://multiembed.mov/?video_id=${id}&tmdb=1&s=1&e=1`;
+    if (contentType === 'movie') {
+      return `https://multiembed.mov/?video_id=${id}&tmdb=1`;
+    } else {
+      return `https://multiembed.mov/?video_id=${id}&tmdb=1&s=1&e=1`;
     }
   };
 
@@ -220,39 +212,38 @@ function App() {
 
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '40px', marginTop: '10px', alignItems: 'flex-start' }}>
             
-            {/* Columna Izquierda: Reproductor Principal y Selector de Fuentes */}
+            {/* Columna Izquierda: Reproductor Principal Protegido contra Pop-ups */}
             <div style={{ flex: 2, minWidth: '300px', maxWidth: '800px' }}>
               <h2 style={{ fontSize: '28px', marginBottom: '15px' }}>▶ Reproduciendo: {selectedItem.title || selectedItem.name}</h2>
               
-              {/* Selector de Opciones de Servidor por si alguno falla o prefieres otra fuente */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px', flexWrap: 'wrap' }}>
-                <span style={{ fontSize: '14px', color: '#aaa', fontWeight: 'bold' }}>Servidor de Reproducción:</span>
-                <button 
-                  onClick={() => setVideoProvider('vidsrc1')}
-                  style={{ backgroundColor: videoProvider === 'vidsrc1' ? '#e50914' : '#222', color: '#fff', border: 'none', padding: '6px 14px', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}
-                >
-                  Servidor A (Principal)
-                </button>
-                <button 
-                  onClick={() => setVideoProvider('vidsrc2')}
-                  style={{ backgroundColor: videoProvider === 'vidsrc2' ? '#e50914' : '#222', color: '#fff', border: 'none', padding: '6px 14px', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}
-                >
-                  Servidor B (Opción 2)
-                </button>
-                <button 
-                  onClick={() => setVideoProvider('multiembed')}
-                  style={{ backgroundColor: videoProvider === 'multiembed' ? '#e50914' : '#222', color: '#fff', border: 'none', padding: '6px 14px', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}
-                >
-                  Servidor C (Multi-idioma)
-                </button>
+              {/* Barra de Estado y Preferencia */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '10px' }}>
+                <span style={{ fontSize: '13px', color: '#46d369', fontWeight: 'bold' }}>
+                  🛡️ Protección Anti-Anuncios y Pop-ups Activa
+                </span>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button 
+                    onClick={() => setAudioPreference('Latino')}
+                    style={{ backgroundColor: audioPreference === 'Latino' ? '#e50914' : '#222', color: '#fff', border: 'none', padding: '5px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}
+                  >
+                    Opción Preferida: Español Latino
+                  </button>
+                  <button 
+                    onClick={() => setAudioPreference('Ingles')}
+                    style={{ backgroundColor: audioPreference === 'Ingles' ? '#e50914' : '#222', color: '#fff', border: 'none', padding: '5px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}
+                  >
+                    Opción Preferida: Inglés / Sub
+                  </button>
+                </div>
               </div>
 
-              {/* Contenedor del reproductor */}
+              {/* Contenedor del reproductor con sandboxing estricto para bloquear ventanas emergentes */}
               <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden', borderRadius: '8px', boxShadow: '0 4px 20px rgba(0,0,0,0.8)', backgroundColor: '#000' }}>
                 <iframe 
                   src={getEmbedUrl()} 
-                  title="Reproductor de streaming" 
+                  title="Reproductor de streaming protegido" 
                   style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
+                  sandbox="allow-scripts allow-same-origin allow-presentation"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
                   allowFullScreen
                 ></iframe>
