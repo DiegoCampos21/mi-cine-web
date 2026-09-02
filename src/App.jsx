@@ -86,16 +86,15 @@ function App() {
       .catch(error => console.error("Error al buscar el tráiler:", error));
   };
 
-  // URL del reproductor optimizado exclusivamente para buscar contenido doblado al español
+  // URL universal compatible con despliegues en la nube sin bloqueo de pantalla en negro
   const getEmbedUrl = () => {
     if (!selectedItem) return '';
     const id = selectedItem.id;
 
-    // Usamos el endpoint de vidsrc configurado explícitamente para región hispanoamericana
     if (contentType === 'movie') {
-      return `https://vidsrc.cc/v2/embed/movie/${id}?autoPlay=true`;
+      return `https://multiembed.mov/?video_id=${id}&tmdb=1`;
     } else {
-      return `https://vidsrc.cc/v2/embed/tv/${id}?autoPlay=true`;
+      return `https://multiembed.mov/?video_id=${id}&tmdb=1&s=1&e=1`;
     }
   };
 
@@ -120,7 +119,7 @@ function App() {
       {/* Barra de Navegación Superior Global */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #333', paddingBottom: '15px', marginBottom: '20px', flexWrap: 'wrap', gap: '15px' }}>
         <h1 style={{ margin: 0, color: '#e50914', cursor: 'pointer' }} onClick={() => { setActiveTab('catalog'); setSelectedItem(null); }}>
-          🎬 Mi Cine Latino
+          🎬 Mi Cine Personal
         </h1>
         
         <div style={{ display: 'flex', gap: '10px' }}>
@@ -214,15 +213,15 @@ function App() {
             <div style={{ flex: 2, minWidth: '300px', maxWidth: '800px' }}>
               <h2 style={{ fontSize: '28px', marginBottom: '15px' }}>▶ Reproduciendo: {selectedItem.title || selectedItem.name}</h2>
               
-              <p style={{ color: '#46d369', fontSize: '13px', marginBottom: '15px', fontWeight: 'bold' }}>
-                🟢 Servidor Optimizado para Contenido en Español Latino (Sin opciones manuales innecesarias)
+              <p style={{ color: '#aaa', fontSize: '13px', marginBottom: '15px' }}>
+                💡 <em>Reproductor universal activo. Selecciona la pista o calidad deseada directamente en la barra de controles inferior del video.</em>
               </p>
 
               {/* Contenedor del reproductor */}
               <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden', borderRadius: '8px', boxShadow: '0 4px 20px rgba(0,0,0,0.8)', backgroundColor: '#000' }}>
                 <iframe 
                   src={getEmbedUrl()} 
-                  title="Reproductor de streaming latino" 
+                  title="Reproductor de streaming" 
                   style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
                   allowFullScreen
