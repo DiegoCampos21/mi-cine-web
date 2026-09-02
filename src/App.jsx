@@ -10,7 +10,7 @@ function App() {
   const [searchTerm, setSearchTerm] = useState('');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [selectedItem, setSelectedItem] + useState(null);
+  const [selectedItem, setSelectedItem] = useState(null);
   const [itemTrailer, setItemTrailer] = useState(null);
   const [currentServer, setCurrentServer] = useState('vidsrc'); // Para cambiar de servidor de video
 
