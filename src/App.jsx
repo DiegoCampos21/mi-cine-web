@@ -20,25 +20,25 @@ function App() {
   
   const API_KEY = import.meta.env.VITE_TMDB_API_KEY;
 
-  // Servidores estables con soporte de subtítulos o selector de audio interno
+  // Servidores actualizados: Prioridad 100% Español Latino
   const servers = [
     { 
-      name: 'Servidor 1 (VidLink - Selector de Audio ⚙️)', 
+      name: 'Servidor 1 (UnLimPlay - 100% Latino)', 
+      getUrl: (type, id) => type === 'movie' 
+        ? `https://unlimplay.com/f/embed/movie/${id}` 
+        : `https://unlimplay.com/f/embed/tv/${id}/1/1` 
+    },
+    { 
+      name: 'Servidor 2 (VidLink - Dual Audio ⚙️)', 
       getUrl: (type, id) => type === 'movie' 
         ? `https://vidlink.pro/movie/${id}?primaryColor=e50914` 
         : `https://vidlink.pro/tv/${id}/1/1?primaryColor=e50914` 
     },
     { 
-      name: 'Servidor 2 (VidSrc PRO - Global)', 
+      name: 'Servidor 3 (VidSrc PRO - Global)', 
       getUrl: (type, id) => type === 'movie' 
         ? `https://vidsrc.pro/embed/movie/${id}` 
         : `https://vidsrc.pro/embed/tv/${id}/1/1` 
-    },
-    { 
-      name: 'Servidor 3 (MultiEmbed)', 
-      getUrl: (type, id) => type === 'movie' 
-        ? `https://multiembed.mov/?video_id=${id}&tmdb=1` 
-        : `https://multiembed.mov/?video_id=${id}&tmdb=1&s=1&e=1` 
     }
   ];
 
@@ -83,7 +83,7 @@ function App() {
   const handleSelectItem = (item) => {
     setSelectedItem(item);
     setItemTrailer(null);
-    setServerIndex(0); // Inicia siempre en VidLink
+    setServerIndex(0); // Inicia siempre en UnLimPlay
 
     axios.get(`https://api.themoviedb.org/3/${contentType}/${item.id}/videos?api_key=${API_KEY}&language=es-MX`)
       .then(response => {
@@ -148,8 +148,8 @@ function App() {
               
               <div style={{ backgroundColor: '#1a1a1a', borderLeft: '4px solid #e50914', padding: '10px', marginBottom: '15px', borderRadius: '4px' }}>
                 <p style={{ color: '#fff', fontSize: '13px', margin: 0 }}>
-                  💡 <strong>Instrucciones de Idioma:</strong> El <strong>Servidor 1 (VidLink)</strong> suele incluir audios duales. Haz clic en el ícono de engranaje (⚙️) dentro de su reproductor para buscar la pista "Spanish" o activa los subtítulos (CC). Si no funciona, prueba los otros servidores.
-                  <br/><br/>🛡️ Obligatorio usar <strong>Brave Browser</strong> o instalar <strong>uBlock Origin</strong> para bloquear la publicidad web.
+                  💡 <strong>Instrucciones de Idioma:</strong> El <strong>Servidor 1 (UnLimPlay)</strong> extrae contenido exclusivamente de páginas latinas. Si un video es muy nuevo y no carga ahí, cambia al <strong>Servidor 2 (VidLink)</strong> y usa su ícono de engranaje (⚙️) para activar la pista "Spanish".
+                  <br/><br/>🛡️ Obligatorio usar <strong>Brave Browser</strong> o instalar <strong>uBlock Origin</strong> para bloquear la publicidad de los servidores gratuitos.
                 </p>
               </div>
 
