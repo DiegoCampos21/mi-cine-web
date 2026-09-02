@@ -84,24 +84,33 @@ function App() {
     setPage(1);
   };
 
-  const handleSelectItem = (item) => {
+  const [videoDirecto, setVideoDirecto] = useState(null); // Nuevo estado para guardar el enlace limpio
+
+  const handleSelectItem = async (item) => {
     setSelectedItem(item);
     setItemTrailer(null);
-    setServerIndex(0); // Empezar siempre con VidLink (el mejor para elegir audio)
+    setVideoDirecto(null); // Limpiamos el video anterior al abrir uno nuevo
 
-    // Buscar tráiler oficial en YouTube como respaldo
+    // 1. Buscamos el tráiler en YouTube (se mantiene igual)
     axios.get(`https://api.themoviedb.org/3/${contentType}/${item.id}/videos?api_key=${API_KEY}&language=es-MX`)
       .then(response => {
         const videos = response.data.results;
         const trailer = videos.find(v => v.type === 'Trailer' && v.site === 'YouTube');
-        if (trailer) {
-          setItemTrailer(trailer.key);
-        } else if (videos.length > 0) {
-          const fallbackTrailer = videos.find(v => v.site === 'YouTube');
-          if (fallbackTrailer) setItemTrailer(fallbackTrailer.key);
-        }
+        if (trailer) setItemTrailer(trailer.key);
       })
       .catch(error => console.error("Error al buscar el tráiler:", error));
+
+    // 2. LA MAGIA FULL-STACK: Llamamos a nuestro propio servidor Backend
+    try {
+      console.log("Pidiendo enlace crudo al Backend...");
+      const respuesta = await axios.get(`http://localhost:5000/api/pelicula/${item.id}`);
+      
+      if (respuesta.data.exito) {
+        setVideoDirecto(respuesta.data.url_video);
+      }
+    } catch (error) {
+      console.error("Error conectando con el Backend propio:", error);
+    }
   };
 
   // Manejar la carga de archivo local
@@ -244,16 +253,22 @@ function App() {
                 ))}
               </div>
 
-              {/* Contenedor del reproductor */}
-              <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden', borderRadius: '8px', boxShadow: '0 4px 20px rgba(0,0,0,0.8)', backgroundColor: '#000' }}>
-                <iframe 
-                  key={serverIndex}
-                  src={servers[serverIndex].getUrl(contentType, selectedItem.id)} 
-                  title="Reproductor de streaming" 
-                  style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                  allowFullScreen
-                ></iframe>
+             {/* Reproductor Nativo Limpio Conectado al Backend */}
+              <div style={{ backgroundColor: '#000', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.8)' }}>
+                {videoDirecto ? (
+                  <video 
+                    src={videoDirecto} 
+                    controls 
+                    autoPlay 
+                    style={{ width: '100%', maxHeight: '500px', display: 'block' }}
+                  >
+                    Tu navegador no soporta la reproducción de video.
+                  </video>
+                ) : (
+                  <div style={{ padding: '60px 20px', textAlign: 'center', color: '#666' }}>
+                    <p>⏳ El servidor está extrayendo el enlace de video puro...</p>
+                  </div>
+                )}
               </div>
 
               {/* Enlace alternativo de tráiler */}
