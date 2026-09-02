@@ -12,7 +12,6 @@ function App() {
   const [totalPages, setTotalPages] = useState(1);
   const [selectedItem, setSelectedItem] = useState(null);
   const [itemTrailer, setItemTrailer] = useState(null);
-  const [audioLanguage, setAudioLanguage] = useState('es'); // 'es' para latino, 'en' para inglés
 
   // Estados para el reproductor local/URL personalizada
   const [videoUrl, setVideoUrl] = useState('');
@@ -71,7 +70,6 @@ function App() {
   const handleSelectItem = (item) => {
     setSelectedItem(item);
     setItemTrailer(null);
-    setAudioLanguage('es'); // Por defecto intentamos español latino
 
     // Buscar tráiler oficial en YouTube como respaldo
     axios.get(`https://api.themoviedb.org/3/${contentType}/${item.id}/videos?api_key=${API_KEY}&language=es-MX`)
@@ -88,16 +86,16 @@ function App() {
       .catch(error => console.error("Error al buscar el tráiler:", error));
   };
 
-  // Función inteligente para configurar la URL de reproducción con parámetros de idioma y subtítulos
+  // URL del reproductor optimizado con soporte de subtítulos integrado en la interfaz
   const getEmbedUrl = () => {
     if (!selectedItem) return '';
     const id = selectedItem.id;
 
-    // Usamos parámetros optimizados para forzar idioma y subtítulos limpios
+    // Usamos embed.su que incorpora un menú completo de subtítulos y selección de pistas nativas en su reproductor
     if (contentType === 'movie') {
-      return `https://vidsrc.me/embed/movie?tmdb=${id}&dsLang=${audioLanguage}`;
+      return `https://embed.su/embed/movie/${id}`;
     } else {
-      return `https://vidsrc.me/embed/tv?tmdb=${id}&dsLang=${audioLanguage}`;
+      return `https://embed.su/embed/tv/${id}`;
     }
   };
 
@@ -213,31 +211,17 @@ function App() {
 
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '40px', marginTop: '10px', alignItems: 'flex-start' }}>
             
-            {/* Columna Izquierda: Reproductor Principal y Selector de Idioma */}
+            {/* Columna Izquierda: Reproductor Principal */}
             <div style={{ flex: 2, minWidth: '300px', maxWidth: '800px' }}>
               <h2 style={{ fontSize: '28px', marginBottom: '15px' }}>▶ Reproduciendo: {selectedItem.title || selectedItem.name}</h2>
               
-              {/* Selector de Idioma (Español Latino / Inglés) */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px', flexWrap: 'wrap' }}>
-                <span style={{ fontSize: '14px', color: '#aaa', fontWeight: 'bold' }}>Idioma de Reproducción:</span>
-                <button 
-                  onClick={() => setAudioLanguage('es')}
-                  style={{ backgroundColor: audioLanguage === 'es' ? '#e50914' : '#222', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}
-                >
-                  🇪🇸 Español Latino
-                </button>
-                <button 
-                  onClick={() => setAudioLanguage('en')}
-                  style={{ backgroundColor: audioLanguage === 'en' ? '#e50914' : '#222', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}
-                >
-                  🇬🇧 Inglés / Subtítulos
-                </button>
-              </div>
+              <p style={{ color: '#aaa', fontSize: '13px', marginBottom: '15px' }}>
+                💡 <em>Nota: Utiliza el icono de engranaje o subtítulos dentro de los controles del reproductor de abajo para desplegar y seleccionar el idioma o subtítulos en español.</em>
+              </p>
 
-              {/* Contenedor del reproductor */}
+              {/* Contenedor del reproductor optimizado */}
               <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden', borderRadius: '8px', boxShadow: '0 4px 20px rgba(0,0,0,0.8)', backgroundColor: '#000' }}>
                 <iframe 
-                  key={audioLanguage} // Fuerza la recarga del iframe al cambiar de idioma
                   src={getEmbedUrl()} 
                   title="Reproductor de streaming" 
                   style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
