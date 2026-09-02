@@ -21,25 +21,25 @@ function App() {
   
   const API_KEY = import.meta.env.VITE_TMDB_API_KEY;
 
-  // Servidores filtrados y forzados mediante parámetros a buscar pistas en Español/Latino
+  // Servidores agregadores con mayor probabilidad de tener pistas en Español Latino
   const servers = [
     { 
-      name: 'Servidor 1 (Recomendado - Español)', 
+      name: 'Servidor 1 (SmashyStream - Multi-Opciones)', 
       getUrl: (type, id) => type === 'movie' 
-        ? `https://vidsrc.xyz/embed/movie?tmdb=${id}&ds_lang=es` 
-        : `https://vidsrc.xyz/embed/tv?tmdb=${id}&ds_lang=es` 
+        ? `https://embed.smashystream.com/playere.php?tmdb=${id}` 
+        : `https://embed.smashystream.com/playere.php?tmdb=${id}&season=1&episode=1` 
     },
     { 
-      name: 'Servidor 2 (Alternativo Latino)', 
+      name: 'Servidor 2 (VidLink - Selector de Audio)', 
       getUrl: (type, id) => type === 'movie' 
-        ? `https://autoembed.co/movie/tmdb/${id}?lang=es-MX` 
-        : `https://autoembed.co/tv/tmdb/${id}-1-1?lang=es-MX` 
+        ? `https://vidlink.pro/movie/${id}?primaryColor=e50914` 
+        : `https://vidlink.pro/tv/${id}/1/1?primaryColor=e50914` 
     },
     { 
-      name: 'Servidor 3 (Selector Manual)', 
+      name: 'Servidor 3 (2Embed - Global)', 
       getUrl: (type, id) => type === 'movie' 
-        ? `https://vidlink.pro/movie/${id}?lang=es` 
-        : `https://vidlink.pro/tv/${id}/1/1?lang=es` 
+        ? `https://www.2embed.cc/embed/${id}` 
+        : `https://www.2embed.cc/embedtv/${id}&s=1&e=1` 
     }
   ];
 
@@ -93,7 +93,7 @@ function App() {
   const handleSelectItem = (item) => {
     setSelectedItem(item);
     setItemTrailer(null);
-    setServerIndex(0); // Empezar siempre con el Servidor 1 (el más estable)
+    setServerIndex(0); // Empezar siempre con el Servidor 1
 
     // Buscar tráiler oficial en YouTube
     axios.get(`https://api.themoviedb.org/3/${contentType}/${item.id}/videos?api_key=${API_KEY}&language=es-MX`)
@@ -200,7 +200,9 @@ function App() {
               {/* Aviso Navegador */}
               <div style={{ backgroundColor: '#1a1a1a', borderLeft: '4px solid #e50914', padding: '10px', marginBottom: '15px', borderRadius: '4px' }}>
                 <p style={{ color: '#fff', fontSize: '13px', margin: 0 }}>
-                  🛡️ <strong>Aviso:</strong> Para una experiencia sin interrupciones, recomendamos usar el navegador <strong>Brave</strong> o instalar la extensión <strong>uBlock Origin</strong>.
+                  🛡️ <strong>Aviso:</strong> Para una experiencia sin interrupciones ni ventanas emergentes, sugerimos usar el navegador <strong>Brave</strong> o instalar <strong>uBlock Origin</strong>. 
+                  <br/><br/>
+                  💡 <strong>Tip de Idioma:</strong> Si el Servidor 1 está en inglés, busca sus controles internos para cambiar de reproductor, o usa el <strong>Servidor 2 (VidLink)</strong> y revisa la tuerca ⚙️ de audio.
                 </p>
               </div>
 
