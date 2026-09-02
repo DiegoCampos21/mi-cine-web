@@ -12,7 +12,7 @@ function App() {
   const [totalPages, setTotalPages] = useState(1);
   const [selectedItem, setSelectedItem] = useState(null);
   const [itemTrailer, setItemTrailer] = useState(null);
-  const [selectedLanguage, setSelectedLanguage] = PARTICULAR_LANG => useState('latino'); // 'latino', 'castellano' o 'ingles'
+  const [selectedLanguage, setSelectedLanguage] = useState('latino'); // 'latino', 'castellano' o 'ingles'
 
   // Estados para el reproductor local/URL personalizada
   const [videoUrl, setVideoUrl] = useState('');
@@ -71,7 +71,7 @@ function App() {
   const handleSelectItem = (item) => {
     setSelectedItem(item);
     setItemTrailer(null);
-    setSelectedLanguage('latino'); // Forzar latino por defecto
+    setSelectedLanguage('latino');
 
     // Buscar tráiler oficial en YouTube como respaldo
     axios.get(`https://api.themoviedb.org/3/${contentType}/${item.id}/videos?api_key=${API_KEY}&language=es-MX`)
@@ -88,12 +88,11 @@ function App() {
       .catch(error => console.error("Error al buscar el tráiler:", error));
   };
 
-  // Generador inteligente con soporte de idioma forzado por parámetros de API de streaming abierta
+  // Generador de URL con soporte de idioma
   const getEmbedUrl = () => {
     if (!selectedItem) return '';
     const id = selectedItem.id;
 
-    // Empleamos rutas optimizadas que aceptan parámetros de forzado de idioma en español latino
     if (contentType === 'movie') {
       return `https://vidsrc.me/embed/movie?tmdb=${id}&dsLang=${selectedLanguage}`;
     } else {
@@ -243,9 +242,9 @@ function App() {
               {/* Contenedor del reproductor */}
               <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden', borderRadius: '8px', boxShadow: '0 4px 20px rgba(0,0,0,0.8)', backgroundColor: '#000' }}>
                 <iframe 
-                  key={selectedLanguage} // Fuerza la recarga inmediata al cambiar de idioma
+                  key={selectedLanguage}
                   src={getEmbedUrl()} 
-                  title="Reproductor de streaming en español" 
+                  title="Reproductor de streaming" 
                   style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
                   allowFullScreen
