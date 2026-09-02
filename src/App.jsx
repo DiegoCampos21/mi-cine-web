@@ -10,8 +10,9 @@ function App() {
   const [searchTerm, setSearchTerm] = useState('');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [selectedItem, setSelectedItem] = useState(null);
+  const [selectedItem, setSelectedItem] + useState(null);
   const [itemTrailer, setItemTrailer] = useState(null);
+  const [currentServer, setCurrentServer] = useState('vidsrc'); // Para cambiar de servidor de video
 
   // Estados para el reproductor local/URL personalizada
   const [videoUrl, setVideoUrl] = useState('');
@@ -70,6 +71,7 @@ function App() {
   const handleSelectItem = (item) => {
     setSelectedItem(item);
     setItemTrailer(null);
+    setCurrentServer('vidsrc'); // Reiniciar al servidor principal por defecto
 
     // Buscar tráiler oficial en YouTube como respaldo
     axios.get(`https://api.themoviedb.org/3/${contentType}/${item.id}/videos?api_key=${API_KEY}&language=es-MX`)
@@ -84,6 +86,26 @@ function App() {
         }
       })
       .catch(error => console.error("Error al buscar el tráiler:", error));
+  };
+
+  // Función para generar la URL del iframe según el servidor seleccionado
+  const getEmbedUrl = () => {
+    if (!selectedItem) return '';
+    const id = selectedItem.id;
+
+    if (currentServer === 'vidsrc') {
+      return contentType === 'movie' 
+        ? `https://vidsrc.me/embed/movie?tmdb=${id}` 
+        : `https://vidsrc.me/embed/tv?tmdb=${id}`;
+    } else if (currentServer === 'vidsrc-to') {
+      return contentType === 'movie' 
+        ? `https://vidsrc.to/embed/movie/${id}` 
+        : `https://vidsrc.to/embed/tv/${id}`;
+    } else if (currentServer === 'embedsu') {
+      return contentType === 'movie' 
+        ? `https://embed.su/embed/movie/${id}` 
+        : `https://embed.su/embed/tv/${id}`;
+    }
   };
 
   // Manejar la carga de archivo local
@@ -198,17 +220,37 @@ function App() {
 
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '40px', marginTop: '10px', alignItems: 'flex-start' }}>
             
-            {/* Columna Izquierda: Reproductor Principal */}
+            {/* Columna Izquierda: Reproductor Principal y Selector de Servidores */}
             <div style={{ flex: 2, minWidth: '300px', maxWidth: '800px' }}>
               <h2 style={{ fontSize: '28px', marginBottom: '15px' }}>▶ Reproduciendo: {selectedItem.title || selectedItem.name}</h2>
               
-              {/* Contenedor optimizado de streaming */}
+              {/* Selector de Servidores para alternar idioma / fuente */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '14px', color: '#aaa', fontWeight: 'bold' }}>Cambiar Servidor / Opción de Audio:</span>
+                <button 
+                  onClick={() => setCurrentServer('vidsrc')}
+                  style={{ backgroundColor: currentServer === 'vidsrc' ? '#e50914' : '#222', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}
+                >
+                  Servidor 1 (Global)
+                </button>
+                <button 
+                  onClick={() => setCurrentServer('vidsrc-to')}
+                  style={{ backgroundColor: currentServer === 'vidsrc-to' ? '#e50914' : '#222', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}
+                >
+                  Servidor 2 (Alternativo)
+                </button>
+                <button 
+                  onClick={() => setCurrentServer('embedsu')}
+                  style={{ backgroundColor: currentServer === 'embedsu' ? '#e50914' : '#222', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}
+                >
+                  Servidor 3 (Multi-audio)
+                </button>
+              </div>
+
+              {/* Contenedor del reproductor */}
               <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden', borderRadius: '8px', boxShadow: '0 4px 20px rgba(0,0,0,0.8)', backgroundColor: '#000' }}>
                 <iframe 
-                  src={contentType === 'movie' 
-                    ? `https://vidsrc.me/embed/movie?tmdb=${selectedItem.id}` 
-                    : `https://vidsrc.me/embed/tv?tmdb=${selectedItem.id}`
-                  } 
+                  src={getEmbedUrl()} 
                   title="Reproductor de streaming" 
                   style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
