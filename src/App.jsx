@@ -732,6 +732,21 @@ function App() {
       return null;
     }
 
+    if (server === 'tukiplay') {
+  if (type === 'movie') {
+    return `https://tukiplay.com/embed/movie/${safeId}`;
+  }
+
+  if (
+    !Number.isInteger(safeSeason) || safeSeason <= 0 ||
+    !Number.isInteger(safeEpisode) || safeEpisode <= 0
+  ) {
+    return null;
+  }
+
+  return `https://tukiplay.com/embed/tv/${safeId}/${safeSeason}/${safeEpisode}`;
+}
+
     if (server === 'unlimplay') {
       return getUnLimPlayUrl(type, safeId, safeSeason, safeEpisode);
     }
@@ -2652,6 +2667,7 @@ function App() {
                         <option value="unlimplay">Unlimplay</option>
                         <option value="videoapi">VideoAPI</option>
                         <option value="moviemaster">MovieMaster</option>
+                        <option value="tukiplay">TukiPlay</option>
                       </select>
                     </div>
 
